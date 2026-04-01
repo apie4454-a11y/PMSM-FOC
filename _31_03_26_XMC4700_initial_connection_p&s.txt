@@ -1,0 +1,11 @@
+**Project: XMC4700 Relax Lite Kit – Debugger Bring‑Up & Recovery**
+
+- Identified missing USB enumeration for on‑board J‑Link OB debugger  
+- Replaced power‑only USB cable with data‑capable cable  
+- Bypassed USB hub and established direct laptop connection  
+- Installed missing SEGGER J‑Link USB drivers manually via Device Manager  
+- Updated on‑board J‑Link OB firmware to latest SEGGER release  
+- Resolved SWD connection issues using reset‑during‑connect recovery sequence  
+- Successfully established stable SWD link to XMC4700 Cortex‑M4 target  
+- Verified full debugger functionality through J‑Link Commander (halt, reg, memory access)  
+- Restored normal plug‑and‑play debugging workflow for DAVE and J‑Link tools

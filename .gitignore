@@ -1,0 +1,28 @@
+# MATLAB/Simulink build artifacts
+*.slxc
+slprj/
+*.autosave
+
+# Temporary files
+*.asv
+*.tmp
+*.bak
+*~
+
+# Large data files (keep only timestamped validation results)
+*.mat
+*.mldatx
+!*_validation_*.mat
+!*_results_*.mat
+
+# Compiled/generated code
+*.p
+*.mex*
+
+# IDE
+.vscode/
+.DS_Store
+Thumbs.db
+
+# Git
+.git/
