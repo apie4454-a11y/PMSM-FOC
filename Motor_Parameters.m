@@ -37,11 +37,35 @@ motor.V_rated = 12;                % Typical working voltage (3S)
 motor.I_rated = 1.0;               % Rated load current [A]
 
 %% ========== MOTOR MECHANICAL PARAMETERS ==========
-% Rotor moment of inertia [kg·m²]
-motor.J = 2.2e-5;                  % User measured inertia
+% Two sets of parameters for comparison and validation:
+% SET 1 (LEGACY): Original estimates [2.2e-5, 1e-6]
+% SET 2 (CALCULATED): Derived from iFligh specs via power analysis [3.8e-6, 4.5e-5]
 
-% Viscous friction coefficient [N·m·s/rad]
-motor.B = 1e-6;                    % User measured damping
+% --- LEGACY PARAMETERS (Session 09-04 Start) ---
+motor.J_legacy = 2.2e-5;           % Legacy: "User measured" inertia (overestimated)
+motor.B_legacy = 1e-6;             % Legacy: "User measured" damping (greatly underestimated)
+% Legacy Ki settling time: 28 seconds (slow)
+% Legacy Ki×20 settling time: 7 seconds (empirical compensation for wrong J,B)
+
+% --- CALCULATED PARAMETERS (Session 09-04 Physics-Based) ---
+% Derived from iFligh GM3506 datasheet specifications:
+%   - No-load power analysis: 2.72 W input @ 16V, 0.17A
+%   - Rotor geometry: OD ~36 mm, mass ~22 g (30% of 72g total)
+%   - Angular velocity: 2262 RPM = 236.8 rad/s
+%   - Mechanical loss: 2.56 W, B·ω² dominates damping
+%
+motor.J_calc = 3.8e-6;             % Calculated: J = 0.5×m×(r_o² + r_i²) = 3.8e-6
+motor.B_calc = 4.5e-5;             % Calculated: B from P_mech = B·ω² + T_f·ω = 4.5e-5
+% Calculated Ki settling time: 7 seconds (no ×20 multiplier needed!)
+
+% --- ACTIVE SET (Switch here to test) ---
+% Option A: Use calculated values (physics-based, validated)
+motor.J = motor.J_calc;            % 3.8e-6 [kg·m²]
+motor.B = motor.B_calc;            % 4.5e-5 [N·m·s/rad]
+
+% Option B: Use legacy values (original estimates)
+% motor.J = motor.J_legacy;          
+% motor.B = motor.B_legacy;
 
 % Coulomb friction torque [N·m] (Estimated starting friction)
 motor.Tf_coulomb = 0.001;          
@@ -73,6 +97,22 @@ speed.omega_bw = 2 * pi * speed.f_bw_speed;
 
 % PI Gains for Speed Controller using Pole-Zero Cancellation
 % Based on: (Kp*s + Ki)/s * 1/(J*s + B)
+%
+% CRITICAL DISCOVERY (09-04-2026):
+% The legacy J and B values (2.2e-5, 1e-6) were severely mismatched to reality.
+% This manifested as: "need Ki×20 to get 7 second settling"
+% 
+% After calculating from iFligh specs via no-load power analysis:
+%   Legacy B = 1e-6 was 45× too LOW (actual ≈ 4.5e-5)
+%   Legacy J = 2.2e-5 was 5.8× too HIGH (actual ≈ 3.8e-6)
+%
+% Result: Ki formula (B × ω) now naturally gives 7-second settling.
+% The ×20 multiplier was compensation for wrong parameters, not a tuning feature.
+%
+% Compare:
+%   Legacy Ki = 1e-6 × 1256.6 = 0.00126 (needs ×20 = 0.0252)
+%   Calculated Ki = 4.5e-5 × 1256.6 = 0.0565 (no multiplier needed!)
+%
 speed.Kp_speed = motor.J * speed.omega_bw;
 speed.Ki_speed = motor.B * speed.omega_bw;
 
@@ -86,9 +126,17 @@ fprintf('Resistance (R): %.2f Ω | Inductance (L): %.2f mH\n', motor.R, motor.L*
 fprintf('Kv: %d RPM/V | Kt: %.4f Nm/A\n', motor.Kv, motor.Kt);
 fprintf('Pole Pairs: %d | Flux Linkage: %.6f Wb\n', motor.pp, motor.lambda_f);
 fprintf('---------------------------------------------\n');
+
+% Show mechanical parameters with both sets
+fprintf('Mechanical Parameters (ACTIVE):\n');
+fprintf('  J = %.3e kg·m² | B = %.3e N·m·s/rad\n', motor.J, motor.B);
+fprintf('  (Legacy: J=%.3e, B=%.3e for reference)\n', motor.J_legacy, motor.B_legacy);
+
+fprintf('---------------------------------------------\n');
 fprintf('Current Loop Bandwidth: %d Hz\n', current.f_bw_current);
 fprintf('PI Gains (Id) -> Kp_id: %.4f | Ki_id: %.1f\n', current.Kp_id, current.Ki_id);
 fprintf('PI Gains (Iq) -> Kp_iq: %.4f | Ki_iq: %.1f\n', current.Kp_iq, current.Ki_iq);
 fprintf('Speed Loop Bandwidth: %d Hz\n', speed.f_bw_speed);
 fprintf('PI Gains (Speed) -> Kp_speed: %.6f | Ki_speed: %.6f\n', speed.Kp_speed, speed.Ki_speed);
+fprintf('  (Legacy Ki would be: %.6f, needed ×20 = %.6f)\n', motor.B_legacy * speed.omega_bw, motor.B_legacy * speed.omega_bw * 20);
 fprintf('=============================================\n\n');

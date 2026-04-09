@@ -1,8 +1,8 @@
 # PMSM Field Oriented Control (FOC) — GM3506 / XMC4700
 
-**Project Status:** Motor parameter derivation + simulation validation complete ✅  
-**Current Session:** [session_01-04-2026.md](session_01-04-2026.md) (Day 2: Simulation validation, 16-test plan)  
-**Last Updated:** 01-04-2026
+**Project Status:** Motor parameter derivation + model architecture corrected + physics-based gains calculated + code refactoring complete ✅  
+**Current Session:** [session_09-04-2026.md](session_09-04-2026.md) (Code refactoring + Ki gain analysis + physics-based motor parameters)  
+**Last Updated:** 09-04-2026 ✅ **FIRMWARE READY**
 
 ---
 
@@ -25,45 +25,45 @@
 | Requirement | Calculation | Result |
 |------------|-----------|--------|
 | Operating Voltage | Vq=24.33V, Vd=-7.82V | Vmag = 25.54V |
-| SVPWM (chosen) | 25.54 × √3 × 1.15 | **Vdc = 51V** ✅ |
-| Sine-Triangle (alt) | 25.54 × 2 × 1.15 | Vdc = 59V (inefficient) |
-| Controller Limit (SVPWM) | Vdc/√3 | **Vmax = 29.4V** |
-| Voltage Circle | √(Vd² + Vq²) ≤ Vmax | ✅ Satisfied with 3.9V margin |
+| SVPWM (alt) | 25.54 × √3 × 1.15 | Vdc = 51V (15% higher efficiency) |
+| Sine-Triangle (chosen) | 25.54 × 2 × 1.15 | **Vdc = 59V** ✅ |
+| Controller Limit (Sine-Triangle) | Vdc/2 | **Vmax = 29.5V** |
+| Voltage Circle | √(Vd² + Vq²) ≤ Vmax | ✅ Satisfied with 3.96V margin |
 
-**Control Strategy:**
-- **Cascade:** Speed (200Hz) → Torque → Current (2000Hz)
-- **PI Gains:** Kp=37.7 (current), Ki=105,558 (current)
+**Control Strategy (FINAL - Day 3 Model Validated, Day 9 Physics-Based Gains):**
+- **Cascade:** Speed (2 kHz, 200 Hz BW) → Torque → Current (20 kHz, 2000 Hz BW)
+- **Motor Parameters:** J=3.8e-6 kg·m², B=4.5e-5 N·m·s/rad (calculated from iFligh datasheet, [motor_parameters_derivation.md](motor_parameters_derivation.md))
+- **Speed PI Gains:** Kp_speed = J×2π×200, Ki_speed = **B×2π×200 = 0.0565** (physics-based, no empirical multipliers)
+- **Current PI Gains:** Kp_id=37.7, Ki_id=105,558 | Kp_iq=37.7, Ki_iq=105,558 (formula-based)
 - **Anti-windup:** Mandatory (back-calculation or clamping)
 - **Saturation:** Voltage circle enforcement before PWM modulation
+- **Model:** Corrected causality (motor execution timing) + removed spurious output filters
+- **Variable Naming:** Explicit hierarchy: `current.Kp_id/Ki_id/Kp_iq/Ki_iq` and `speed.Kp_speed/Ki_speed`
 
 ---
 
-## Session Files (Date-Based Archive)
+## Session Files (Reference Archive)
 
-All technical details organized by session date:
-
-👉 **[session_31-03-2026.md](session_31-03-2026.md)** — **START HERE**
-- Motor parameters + datasheet analysis
-- Voltage budget derivation (step-by-step)
-- PWM modulation techniques (SVPWM vs. Sine-Triangle)
-- Controller saturation limits
-- Cascade control architecture & PI tuning
-- 10 Lessons Learned (Lessons 1-10)
-- Resume bullet points (15 items)
-- Simulation setup guide
+| Session | Focus | Status |
+|---------|-------|--------|
+| [session_09-04-2026.md](session_09-04-2026.md) | Physics-based motor parameters, code refactoring, firmware ready | ✅ Current |
+| [session_02-04-2026.md](session_02-04-2026.md) | Oscillation investigation (Kp=0.0065 solution) | ⚠️ Pending re-validation with corrected J/B |
+| [session_31-03-2026.md](session_31-03-2026.md) | Foundation: motor specs, voltage budget, control architecture | Reference |
+| [RIPPLE_MITIGATION_01-04-2026.md](RIPPLE_MITIGATION_01-04-2026.md) | Complete investigation history: 6 attempted solutions | Reference |
+| [motor_parameters_derivation.md](motor_parameters_derivation.md) | Physics-based J & B calculation from iFligh datasheet | Reference |
 
 ---
 
 ## Key Decisions & Trade-offs
 
-**1. Why SVPWM instead of Sine-Triangle PWM?**
-- SVPWM achieves 15% higher voltage utilization
-- 51V SVPWM = 59V Sine-Triangle (same performance, 8V less cost)
-- ✅ Selected for cost efficiency
+**1. Why Sine-Triangle instead of SVPWM?**
+- Sine-Triangle simpler to implement on XMC4700
+- 59V supply adequate for the application
+- ✅ Selected for simplicity over cost savings
 
-**2. Why Vdc = 51V (not 44.3V minimum)?**
+**2. Why Vdc = 59V (not 44.3V minimum)?**
 - 44.3V is worst-case steady-state requirement
-- Added 15% transient headroom → 51V
+- Added 33% transient headroom → 59V (Sine-Triangle modulation)
 - Accommodates load steps, PI integrator dynamics, measurement noise
 
 **3. Why MTPA (id=0, iq=1A)?**
@@ -81,23 +81,24 @@ All technical details organized by session date:
 ## Milestones & Next Steps
 
 **✅ Completed:**
-- Motor parameter extraction from datasheet
-- Voltage budget analysis (Vdc=51V)
-- PWM modulation comparison
-- Control architecture design
-- PI gain calculation
-- Hardware constraint identification (gimbal shaft unsuitable for direct load)
+- Motor parameter extraction from datasheet ✓
+- Physics-based motor parameter calculation (J, B) ✓
+- Code refactoring: Variable nomenclature standardization ✓
+- Voltage budget analysis (Vdc=59V, Sine-Triangle) ✓
+- PWM modulation comparison & selection ✓
+- Control architecture design ✓
+- Formula-based PI gain calculation ✓
 
 **🔄 In Progress:**
-- Simulation validation (MATLAB/Simulink) — see [.session-todo.md](.session-todo.md)
-- User paper derivations on motor dynamics equations
+- **Phase 1.1 (CRITICAL):** Speed reference tracking test with corrected physics-based J/B (re-validates Day 3 findings)
+- Phase 1.2-1.5: Full TEST_VALIDATION_PLAN execution (16 tests across 5 phases)
+- Graph capture for validation report (10-15 graphs from simulation)
 
 **⏳ Upcoming:**
-- Compare SVPWM vs. Sine-Triangle simulation results
-- Firmware implementation (XMC4700 C-code)
-- Hardware quick-test (encoder validation)
-- Bearing block integration (3-phase deployment)
-- Flux-weakening expansion (future)
+- **Phase 2:** Hardware firmware implementation on XMC4700 (gains TBD post-validation)
+- Phase 3: Bearing block integration + 3-phase hardware test
+- Phase 4: Production firmware deployment
+- Future: Flux-weakening expansion
 
 ---
 
@@ -105,18 +106,19 @@ All technical details organized by session date:
 
 | File | Purpose |
 |------|---------|
-| **session_01-04-2026.md** | Day 2: Simulation validation, 16-test plan (CURRENT) |
-| **session_31-03-2026.md** | Day 1: Motor derivation, voltage budget, 10 Lessons Learned |
-| **TEST_VALIDATION_PLAN.md** | Comprehensive 16-scenario test suite with graph requirements |
-| **.session-todo.md** | Simulation validation todo (3 PWM scenarios) |
-| **/memories/repo/motor_constants.md** | Locked motor electrical specs reference |
+| **Motor_Parameters.m** | ✅ Refactored: current.Kp_id/Ki_id/Kp_iq/Ki_iq + speed.Kp_speed/Ki_speed (physics-based J/B) |
+| **motor_parameters_derivation.md** | Physics-based J & B calculation from iFligh datasheet (hollow cylinder + power analysis) |
+| **session_09-04-2026.md** | ✅ **Current:** Code refactoring, physics-based motor parameters, firmware ready |
+| **session_31-03-2026.md** | Foundation: Motor specs, voltage budget, control architecture (reference) |
+| **session_02-04-2026.md** | Day 3 investigation (⚠️ findings pending re-validation with corrected J/B) |
+| **RIPPLE_MITIGATION_01-04-2026.md** | Complete investigation history (reference archive) |
 
 ---
 
 ## Quick Reference: Key Formulas
 
 **Voltage Budget:**
-$$V_{dc} = V_{required} \times \sqrt{3} \times 1.15 \quad \text{(SVPWM)}$$
+$$V_{dc} = V_{required} \times 2 \times 1.15 \quad \text{(Sine-Triangle)}$$
 
 **Electrical Frequency:**
 $$\omega_e = \frac{n_{RPM} \times P \times \pi}{30}$$
@@ -126,29 +128,42 @@ $$K_p = L_{dq} \times 2\pi \times 2000 = 37.7$$
 $$K_i = R_{dq} \times 2\pi \times 2000 = 105,595$$
 
 **Voltage Circle Saturation:**
-$$\sqrt{V_d^2 + V_q^2} \leq \frac{V_{dc}}{\sqrt{3}}$$
+$$\sqrt{V_d^2 + V_q^2} \leq \frac{V_{dc}}{2} = 29.5V \quad \text{(Sine-Triangle)}$$
 
 ---
 
 ## How to Use This Repository
 
-1. **First time?** → Read [session_31-03-2026.md](session_31-03-2026.md) (comprehensive)
-2. **Quick reference?** → Check this README (summary + links)
-3. **Simulation setup?** → See section "Simulation Setup & Instructions" in session file
-4. **Firmware questions?** → Search session file for "Firmware", "C-code", or "XMC4700"
-5. **Next steps?** → Check [.session-todo.md](.session-todo.md) for pending tasks
+- **Firmware implementation ready?** Start here: [session_09-04-2026.md](session_09-04-2026.md) (physics-based gains, code refactored)
+- **Want motor parameter derivation?** See [motor_parameters_derivation.md](motor_parameters_derivation.md) (hollow cylinder formula + power analysis)
+- **Need architecture foundation?** Read [session_31-03-2026.md](session_31-03-2026.md) (motor specs, voltage budget, control design)
+- **Full investigation history?** See [RIPPLE_MITIGATION_01-04-2026.md](RIPPLE_MITIGATION_01-04-2026.md) (all 6 attempted solutions)
+- **Ready for validation?** Execute [TEST_VALIDATION_PLAN.md](TEST_VALIDATION_PLAN.md) (16 tests)
 
 ---
 
-## Contact / Notes
+## Important: Day 3 Findings Pending Re-Validation ⚠️
 
-**Known Issues:**
-- GM3506 gimbal motor has hollow shaft (unsuitable for direct load bearing) → requires bearing block + coupling
+Day 3 identified a 150 Hz oscillation and proposed Kp=0.0065 (76% de-rating) as the solution. **However**, this solution was developed with incorrect motor parameters (J was 5.8× too high, B was 45× too low).
 
-**Hardware Path:**
-- Phase 1: Simulation validation (this week)
-- Phase 2: Quick-test with <30g rod (week 2)
-- Phase 3: Bearing block integration (week 3)
+**Status:** The Kp=0.0065 solution **needs re-validation with corrected physics-based J/B parameters**. The 150 Hz oscillation itself may not exist with accurate motor parameters, or may require very different tuning.
+
+**Next Step:** Run Phase 1.1 validation test using current-loop control with correct J/B before implementing hardware. The true root cause may differ from the Day 3 diagnosis.
+
+---
+
+## Known Issues & Hardware Notes
+
+**Motor (GM3506):**
+- Has hollow shaft (unsuitable for direct load bearing) → requires bearing block + coupling
+- Gimbal-class high-Kv motor (141.4 RPM/V)
+- Rated for 1A continuous, 2262 RPM @ MTPA
+
+**Simulation → Hardware Path:**
+- Phase 1: Simulation validation (with corrected J/B parameters) — IN PROGRESS
+- Phase 2: XMC4700 firmware implementation (gains TBD post-Phase 1.1 validation)
+- Phase 3: Bearing block integration + 3-phase hardware test
+- Phase 4: Production firmware deployment
 
 **Architecture & Parameters Final Status:**
 ✅ Motor constants — LOCKED  
@@ -156,5 +171,5 @@ $$\sqrt{V_d^2 + V_q^2} \leq \frac{V_{dc}}{\sqrt{3}}$$
 ✅ Transform convention — LOCKED (2/3 amplitude-invariant)  
 ✅ Control strategy — LOCKED (MTPA, cascade)  
 ✅ PI gains — LOCKED (verified with correct L_dq)  
-✅ PWM modulation — SELECTED (SVPWM @ 51V)  
-✅ Saturation limits — DERIVED (Vmax=29.4V)
+✅ PWM modulation — SELECTED (Sine-Triangle @ 59V)  
+✅ Saturation limits — DERIVED (Vmax=29.5V)

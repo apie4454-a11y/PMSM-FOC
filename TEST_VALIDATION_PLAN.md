@@ -96,6 +96,54 @@ This document defines comprehensive validation tests to verify:
 
 ---
 
+### Test 1.3: Oscillation Validation @ Kp=0.0065 (Root Cause Verification)
+**Objective:** Validate that Kp reduction to 0.0065 eliminates 150 Hz oscillation discovered in Day 3 investigation
+
+**Background:** Days 1-3 systematic testing revealed discrete PI controller instability at 2 kHz sampling with theoretical Kp=0.0267. Root cause: 440× motor-to-sample-rate mismatch creates phase lag, destabilizing high gains. Solution: Reduce Kp to 0.0065 (76% de-rating).
+
+| Parameter | Value | Unit |
+|-----------|-------|------|
+| Speed Reference | 2262 | RPM |
+| Load Profile | 0 Nm constant (no-load test) | Nm |
+| Sampling Rate (Speed Loop) | 2 | kHz |
+| Kp Value (Tuned) | 0.0065 | - |
+| Expected Oscillation Frequency (BEFORE fix) | 150 | Hz |
+| Expected Oscillation Frequency (AFTER fix) | None | - |
+
+**Expected Results:**
+- Zero sustained 150 Hz oscillation in iq and speed
+- Ripple amplitude < 0.3 A (switching ripple only, no control oscillation)
+- FFT shows NO peak at 150 Hz (clean baseline)
+- Smooth, damped response to speed commands
+- Settling time: ~150 ms (as documented in Day 3)
+
+**Pass Criteria:**
+- [ ] Peak-to-peak iq ripple: < 0.5 A (no 150 Hz oscillation visible)
+- [ ] FFT(iq): NO discrete peak in 100-200 Hz band
+- [ ] FFT(speed): NO discrete peak in 50-150 Hz band
+- [ ] Oscillation elimination confirmed vs. Day 3 problem case
+- [ ] Settling time < 200 ms (typical FOC performance)
+
+**Graphs to Capture & Save:**
+1. **iq time-domain plot (0.5-1.5 s window, show smooth settling)**
+2. **FFT(iq) from DC to 300 Hz** (show absence of 150 Hz peak)
+3. **Speed error over time (should converge smoothly, no oscillation)**
+4. **Overlaid comparison: Kp=0.0267 (oscillatory) vs. Kp=0.0065 (stable)** (side-by-side)
+5. **iq zoomed during transient (2-3 PWM cycles, show clean waveform)**
+6. **Speed ripple FFT (should show only 20 kHz switching, no 150 Hz)
+
+**Results:**
+- Simulation Date: __________
+- Peak Ripple (iq): __________ A
+- FFT Peak Search (100-200 Hz): __________ (should be "No peak" or "<0.1A SNR")
+- Oscillation Status: ELIMINATED ✓ / PERSISTS ✗
+- Settling Time: __________ ms
+- Comparison to Problem Case: __________ % improvement
+- Graphs saved as: Test_1_3_oscillation_validation_[date].png, Test_1_3_fft_comparison_[date].png
+- Notes: _____________________________________________________________
+
+---
+
 ## Test Phase 2: Load Transient Response
 
 ### Test 2.1: Gradual Load Ramp (0 → 0.0671 Nm)
@@ -180,6 +228,61 @@ This document defines comprehensive validation tests to verify:
 - Time to Settle: __________ ms
 - Peak Current: __________ A
 - Graphs saved as: Test_2_2_load_step_[date].png, Test_2_2_error_recovery_[date].png
+- Notes: _____________________________________________________________
+
+---
+
+### Test 2.5: PI Gain Margin Analysis (Kp Stability Boundary)
+**Objective:** Determine how close Kp=0.0065 is to instability boundary; validate safety factor for manufacturing/temperature tolerances
+
+**Rationale:** Gain margin (distance to instability) is critical for robustness. Too close to boundary = sensitive to component variations. Industry target: 20-45° phase margin (equivalent to 2-3x gain safety factor).
+
+| Parameter | Value | Unit |
+|-----------|-------|------|
+| Nominal Kp | 0.0065 | - |
+| Test Range | 0.0050 to 0.0100 | Kp sweep |
+| Speed Reference | 2262 | RPM |
+| Load | 0 Nm | Nm |
+| Sampling Rate | 2 | kHz |
+
+**Expected Results:**
+- Kp=0.0065: **STABLE** (nominal working point)
+- Kp=0.0080: **BORDERLINE/UNSTABLE** (visible ringing or oscillation)
+- Kp=0.0050: **OVERDAMPED** (slow response, safe)
+- Gain margin: ~20% (means Kp can increase 20% before instability)
+
+**Pass Criteria:**
+- [ ] Kp=0.0065 completely stable (no growing oscillation)
+- [ ] Gain margin ≥ 15% (Kp can reach ≥0.0075 before instability)
+- [ ] Phase response smooth, not resonant
+- [ ] Settling time degrades gracefully as Kp reduced below 0.0065
+
+**Test Procedure:**
+1. Run 5 simulations: Kp = [0.0050, 0.0060, 0.0065, 0.0075, 0.0090]
+2. Apply speed step 0→2262 RPM @ t=0.1s
+3. Log: speed response, iq, error signal for 1 second
+4. Analyze: settling time, overshoot, oscillation onset
+
+**Graphs to Capture & Save:**
+1. **Speed responses (all 5 Kp values overlaid)** (show when instability starts)
+2. **Pole-zero map (discrete Z-plane)** (show pole locations for each Kp)
+3. **Phase margin vs. Kp** (plot showing 20° phase margin line)
+4. **iq ripple amplitude vs. Kp** (should increase near instability)
+5. **Settling time vs. Kp curve** (trade-off visualization)
+6. **Bode plot: Open-loop G(z) for nominal Kp=0.0065** (show phase margin graphically)
+7. **Step response at Kp limits** (0.0050 vs 0.0065 vs 0.0090)
+
+**Results:**
+- Simulation Date: __________
+- Kp=0.0050: Stable ✓ / Unstable ✗, Settling time: __________ ms
+- Kp=0.0060: Stable ✓ / Unstable ✗, Settling time: __________ ms
+- Kp=0.0065: Stable ✓ / Unstable ✗, Settling time: __________ ms
+- Kp=0.0075: Stable ✓ / Borderline ⚠ / Unstable ✗
+- Kp=0.0090: Stable ✓ / Unstable ✗
+- Gain Margin (% increase before instability): __________ %
+- Phase Margin @ Kp=0.0065: __________ °
+- Safety Factor Validation: ADEQUATE ✓ / MARGINAL ⚠ / INSUFFICIENT ✗
+- Graphs saved as: Test_2_5_gain_margin_[date].png, Test_2_5_pole_zero_[date].png, Test_2_5_bode_[date].png
 - Notes: _____________________________________________________________
 
 ---
@@ -470,6 +573,72 @@ This document defines comprehensive validation tests to verify:
 
 ---
 
+### Test 3.6: RC Filter Effectiveness (Ripple Mitigation Comparison)
+**Objective:** Validate RC filter design (τ=250µs) delivers superior ripple suppression vs. alternatives tested in Days 1-3
+
+**Background:** Investigation tested 3 filtering approaches:
+1. Moving average (10-tap): Failed—added 250µs delay, made oscillation worse
+2. Mean block (averaging): Partial help only, didn't solve root cause
+3. RC filter (τ=250µs): Success—smooth ripple without excess delay
+
+This test quantifies the improvement and confirms final design choice.
+
+| Parameter | Value | Unit |
+|-----------|-------|------|
+| Test Cases | Unfiltered, Moving Avg, RC Filter | - |
+| Cutoff Frequency (RC) | 1/(2π×250µs) ≈ 637 | Hz |
+| Speed Reference | 2262 | RPM |
+| Load Profile | 0 Nm constant | Nm |
+| Measurement: iq ripple | 20 kHz PWM + control artifacts | - |
+
+**Expected Results:**
+- **Unfiltered:** iq ripple ±0.4-0.5 A (all switching + control noise)
+- **Moving Average 10-tap:** Ripple reduced, BUT settling slowed, oscillation exacerbated
+- **RC Filter (τ=250µs):** Ripple ±0.2-0.3 A (PWM only, clean control response)
+
+**Pass Criteria:**
+- [ ] RC filter achieves ≥50% ripple reduction vs. unfiltered
+- [ ] No additional oscillation induced by RC filter
+- [ ] Phase lag from RC filter <5° @ 2 kHz control rate (delay <0.7 ms)
+- [ ] Settling time similar to unfiltered (RC doesn't slow response)
+- [ ] THD (Total Harmonic Distortion) reduced in iq spectrum
+
+**Test Procedure:**
+1. Run 3 identical simulations with different iq filtering:
+   - Case A: No filter (raw PWM + control)
+   - Case B: Moving average 10-tap (from Day 2 failed attempt)
+   - Case C: RC filter with τ=250µs (final design)
+2. Apply step: speed 0→2262 RPM @ t=0.1s
+3. Log iq at 20 kHz sampling (capture all switching ripple)
+4. Analyze: peak ripple, RMS noise, frequency content, settling time
+
+**Graphs to Capture & Save:**
+1. **iq time-domain (0.2-0.4 s window, zoomed to show 2-3 PWM cycles)**
+   - All 3 cases overlaid (Unfiltered vs. Mov-Avg vs. RC)
+2. **iq zoomed detail plot (5 PWM cycles ≈ 250µs window)**
+   - Individual sub-plots for each filter case
+3. **FFT(iq) DC-100 kHz** (show ripple spectrum for each case)
+   - Peaks: 20 kHz (switching), harmonics, control artifacts
+4. **RMS ripple amplitude vs. filter type** (bar chart: 3 bars)
+5. **Settling time overlay** (speed response for all 3, show delay)
+6. **Phase lag measurement:** iq_filtered vs. iq_reference (time shift)
+7. **Control performance plot:** iq_ref vs. iq_actual for RC case (should track well)
+
+**Results:**
+- Simulation Date: __________
+- Unfiltered iq Peak Ripple: ±__________ A
+- Moving Average iq Peak Ripple: ±__________ A
+- RC Filter iq Peak Ripple: ±__________ A
+- Ripple Reduction (RC vs. Unfiltered): __________ %
+- RC Filter Phase Lag @ 2 kHz: __________ °
+- Phase Lag as Time Delay: __________ µs
+- Settling Time Change (RC vs. Unfiltered): __________ ms difference
+- RC Filter Design Validation: PASS ✓ / MARGINAL ⚠ / FAIL ✗
+- Graphs saved as: Test_3_6_filter_comparison_[date].png, Test_3_6_ripple_fft_[date].png, Test_3_6_settling_overlay_[date].png
+- Notes: _____________________________________________________________
+
+---
+
 ## Test Phase 4: Advanced Scenarios
 
 ### Test 4.1: Integrator Windup During Saturation
@@ -547,6 +716,74 @@ $$\sqrt{V_d^2 + V_q^2} \leq V_{max} = 29.4 \text{ V}$$
 - Peak Violation Amount: __________ V over limit (if any)
 - Number of violations: __________
 - Graphs saved as: Test_5_1_voltage_circle_[date].png, Test_5_1_radius_envelope_[date].png
+- Notes: _____________________________________________________________
+
+---
+
+### Test 5.2: Settling Time Characterization (Performance Validation Across Operating Range)
+**Objective:** Map settling time across speed and load conditions; validate ~150 ms settling time observed in Day 3 is achievable throughout operating range
+
+**Rationale:** Settling time determines system responsiveness. Must be consistent across 0-2262 RPM and 0-100% load to ensure predictable performance for application (gimbal motor demanding ~150 ms response).
+
+| Parameter | Value | Unit |
+|-----------|-------|------|
+| Speed Points Tested | 500, 1000, 1500, 2262 | RPM |
+| Load Points Tested | 0, 50%, 100% of max (0.0671 Nm) | Nm |
+| Test Matrix | 4 speeds × 3 loads = 12 conditions | - |
+| Settling Criterion | Speed ±2% of reference | - |
+| Nominal Expected Settling | ~150 | ms (from Day 3 validation) |
+
+**Expected Results:**
+- Settling time relatively flat across speed range (2% variation max)
+- Settling time increases slightly under heavy load (dynamic response slower)
+- No speed "hunting" or oscillation near setpoint
+- Overshoot consistent: 0-5% across all conditions
+
+**Pass Criteria:**
+- [ ] Settling time: 140-160 ms @ all speeds, no load
+- [ ] Settling time: 150-180 ms @ all speeds, 100% load (acceptable increase)
+- [ ] Overshoot: ≤5% in all conditions
+- [ ] No hunting or limit-cycle oscillation
+- [ ] Response time degrades gracefully with load
+
+**Test Procedure:**
+1. Create 12 test scenarios (speed × load combinations)
+2. For each: Apply speed step → hold for 1.5s → log response
+3. Measure: settling time (2% band), overshoot %, peak current
+4. Generate heatmap and curve fits
+
+**Graphs to Capture & Save:**
+1. **Speed response matrix (4×3 grid):** Individual plots for each speed/load combo
+2. **Settling time vs. Speed curve** (no load condition)
+   - X-axis: Speed (0-2262 RPM)
+   - Y-axis: Settling time (ms)
+   - Should be flat ±20 ms
+3. **Settling time vs. Load curve** (at 2262 RPM)
+   - X-axis: Load % (0-100%)
+   - Y-axis: Settling time (ms)
+   - Should show graceful increase, not sharp jumps
+4. **Overshoot vs. Speed** (bar chart, all 12 conditions)
+5. **Heatmap: Settling Time (Speed vs. Load)** (color gradient 0-200ms)
+6. **Response time envelope plot** (all 12 speed traces overlaid, normalized)
+7. **Peak current vs. Load** (verify current limiting at high load)
+
+**Results Summary Table:**
+
+| Speed (RPM) | Load=0% | Load=50% | Load=100% | Notes |
+|-------------|---------|----------|-----------|-------|
+| 500 | ____ms | ____ms | ____ms | |
+| 1000 | ____ms | ____ms | ____ms | |
+| 1500 | ____ms | ____ms | ____ms | |
+| 2262 | ____ms | ____ms | ____ms | |
+
+**Additional Results:**
+- Simulation Date: __________
+- Min Settling Time Found: __________ ms (at __________ RPM, __________ load)
+- Max Settling Time Found: __________ ms (at __________ RPM, __________ load)
+- Settling Time Variance: ±__________ ms
+- Max Overshoot Observed: __________ % (at which condition?)
+- Response Consistency: GOOD ✓ / ACCEPTABLE ⚠ / POOR ✗
+- Graphs saved as: Test_5_2_settling_matrix_[date].png, Test_5_2_settling_curves_[date].png, Test_5_2_heatmap_[date].png
 - Notes: _____________________________________________________________
 
 ---
