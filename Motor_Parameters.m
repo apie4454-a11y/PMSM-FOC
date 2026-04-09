@@ -1,7 +1,7 @@
 %% GM3506 Motor Parameters - Inverted Pendulum Project
 % This file defines all motor parameters used across simulation phases.
 % Source: User measurements for iPower GM3506 Gimbal Motor.
-clear all; close all; clc;
+close all; clc;
 
 %% ========== MOTOR ELECTRICAL PARAMETERS ==========
 motor.name = 'iPower GM3506 Gimbal Motor';
@@ -56,13 +56,25 @@ inverter.Vdc = 59;                 % SVPWM minimum for 2262 RPM @ 1A MTPA with 1
 
 %% ========== CONTROL LOOP PARAMETERS ==========
 % Target Bandwidth for Current Loops [Hz]
-control.f_bw_current = 2000; 
-control.omega_bw = 2 * pi * control.f_bw_current;
+current.f_bw_current = 2000; 
+current.omega_bw = 2 * pi * current.f_bw_current;
 
-% PI Gains using Pole-Zero Cancellation
+% PI Gains for Current (Id/Iq) Controller using Pole-Zero Cancellation
 % Based on: (Kp*s + Ki)/s * 1/(L*s + R)
-control.Kp = motor.L * control.omega_bw;
-control.Ki = motor.R * control.omega_bw;
+% Note: Lq = Ld, so both axes use identical gains
+current.Kp_id = motor.L * current.omega_bw;
+current.Ki_id = motor.R * current.omega_bw;
+current.Kp_iq = motor.L * current.omega_bw;
+current.Ki_iq = motor.R * current.omega_bw;
+
+% Target Bandwidth for Speed Loop [Hz]
+speed.f_bw_speed = 200;
+speed.omega_bw = 2 * pi * speed.f_bw_speed;
+
+% PI Gains for Speed Controller using Pole-Zero Cancellation
+% Based on: (Kp*s + Ki)/s * 1/(J*s + B)
+speed.Kp_speed = motor.J * speed.omega_bw;
+speed.Ki_speed = motor.B * speed.omega_bw;
 
 %% ========== SIMULATION PARAMETERS ==========
 sim.t_end = 2.0;                   % Total simulation time [seconds]
@@ -74,6 +86,9 @@ fprintf('Resistance (R): %.2f Ω | Inductance (L): %.2f mH\n', motor.R, motor.L*
 fprintf('Kv: %d RPM/V | Kt: %.4f Nm/A\n', motor.Kv, motor.Kt);
 fprintf('Pole Pairs: %d | Flux Linkage: %.6f Wb\n', motor.pp, motor.lambda_f);
 fprintf('---------------------------------------------\n');
-fprintf('Current Loop Bandwidth: %d Hz\n', control.f_bw_current);
-fprintf('PI Gains -> Kp: %.4f | Ki: %.1f\n', control.Kp, control.Ki);
+fprintf('Current Loop Bandwidth: %d Hz\n', current.f_bw_current);
+fprintf('PI Gains (Id) -> Kp_id: %.4f | Ki_id: %.1f\n', current.Kp_id, current.Ki_id);
+fprintf('PI Gains (Iq) -> Kp_iq: %.4f | Ki_iq: %.1f\n', current.Kp_iq, current.Ki_iq);
+fprintf('Speed Loop Bandwidth: %d Hz\n', speed.f_bw_speed);
+fprintf('PI Gains (Speed) -> Kp_speed: %.6f | Ki_speed: %.6f\n', speed.Kp_speed, speed.Ki_speed);
 fprintf('=============================================\n\n');
