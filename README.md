@@ -30,14 +30,15 @@
 | Controller Limit (Sine-Triangle) | Vdc/2 | **Vmax = 29.5V** |
 | Voltage Circle | √(Vd² + Vq²) ≤ Vmax | ✅ Satisfied with 3.96V margin |
 
-**Control Strategy (FINAL - Day 3 Model Validated, Day 9 Physics-Based Gains):**
+**Control Strategy (FINAL - Day 3 Model Validated, Day 9 Physics-Based Gains, Day 10 Dead Time Validated):**
 - **Cascade:** Speed (2 kHz, 200 Hz BW) → Torque → Current (20 kHz, 2000 Hz BW)
 - **Motor Parameters:** J=3.8e-6 kg·m², B=4.5e-5 N·m·s/rad (calculated from iFligh datasheet, [motor_parameters_derivation.md](motor_parameters_derivation.md))
 - **Speed PI Gains:** Kp_speed = J×2π×200, Ki_speed = **B×2π×200 = 0.0565** (physics-based, no empirical multipliers)
 - **Current PI Gains:** Kp_id=37.7, Ki_id=105,558 | Kp_iq=37.7, Ki_iq=105,558 (formula-based)
+- **PWM Dead Time:** SR FlipFlop reconstruction (rising edge delayed, falling edge original), Tdead ≤ 100 ns (real hardware)
 - **Anti-windup:** Mandatory (back-calculation or clamping)
 - **Saturation:** Voltage circle enforcement before PWM modulation
-- **Model:** Corrected causality (motor execution timing) + removed spurious output filters
+- **Model:** Corrected causality (motor execution timing) + removed spurious output filters + dead time insertion validated
 - **Variable Naming:** Explicit hierarchy: `current.Kp_id/Ki_id/Kp_iq/Ki_iq` and `speed.Kp_speed/Ki_speed`
 
 ---
@@ -46,7 +47,8 @@
 
 | Session | Focus | Status |
 |---------|-------|--------|
-| [session_09-04-2026.md](session_09-04-2026.md) | Physics-based motor parameters, code refactoring, firmware ready | ✅ Current |
+| [session_10-04-2026.md](session_10-04-2026.md) | Dead time insertion (PWM safety), performance validation | ✅ Validated |
+| [session_09-04-2026.md](session_09-04-2026.md) | Physics-based motor parameters, code refactoring, firmware ready | ✅ Complete |
 | [session_02-04-2026.md](session_02-04-2026.md) | Oscillation investigation (Kp=0.0065 solution) | ⚠️ Pending re-validation with corrected J/B |
 | [session_31-03-2026.md](session_31-03-2026.md) | Foundation: motor specs, voltage budget, control architecture | Reference |
 | [RIPPLE_MITIGATION_01-04-2026.md](RIPPLE_MITIGATION_01-04-2026.md) | Complete investigation history: 6 attempted solutions | Reference |
@@ -88,14 +90,15 @@
 - PWM modulation comparison & selection ✓
 - Control architecture design ✓
 - Formula-based PI gain calculation ✓
+- Phase 1.1: Speed reference tracking with corrected J/B ✓
+- Phase 1.2: Dead time insertion validation ✓
 
 **🔄 In Progress:**
-- **Phase 1.1 (CRITICAL):** Speed reference tracking test with corrected physics-based J/B (re-validates Day 3 findings)
-- Phase 1.2-1.5: Full TEST_VALIDATION_PLAN execution (16 tests across 5 phases)
-- Graph capture for validation report (10-15 graphs from simulation)
+- Phase 1.3-1.5: Full TEST_VALIDATION_PLAN execution (remaining tests)
+- Graph capture for validation report (10-14 graphs from simulation)
 
 **⏳ Upcoming:**
-- **Phase 2:** Hardware firmware implementation on XMC4700 (gains TBD post-validation)
+- **Phase 2:** Hardware firmware implementation on XMC4700 (gains validated, dead time architecture ready)
 - Phase 3: Bearing block integration + 3-phase hardware test
 - Phase 4: Production firmware deployment
 - Future: Flux-weakening expansion
@@ -108,7 +111,8 @@
 |------|---------|
 | **Motor_Parameters.m** | ✅ Refactored: current.Kp_id/Ki_id/Kp_iq/Ki_iq + speed.Kp_speed/Ki_speed (physics-based J/B) |
 | **motor_parameters_derivation.md** | Physics-based J & B calculation from iFligh datasheet (hollow cylinder + power analysis) |
-| **session_09-04-2026.md** | ✅ **Current:** Code refactoring, physics-based motor parameters, firmware ready |
+| **session_10-04-2026.md** | ✅ **Latest:** Dead time insertion, SR FlipFlop validation, performance tested |
+| **session_09-04-2026.md** | Code refactoring, physics-based motor parameters, firmware ready |
 | **session_31-03-2026.md** | Foundation: Motor specs, voltage budget, control architecture (reference) |
 | **session_02-04-2026.md** | Day 3 investigation (⚠️ findings pending re-validation with corrected J/B) |
 | **RIPPLE_MITIGATION_01-04-2026.md** | Complete investigation history (reference archive) |
