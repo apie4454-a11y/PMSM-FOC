@@ -1,0 +1,31 @@
+# DAVE IDE Build Artifacts
+Debug/
+Release/
+slprj/
+
+# Object Files
+*.o
+*.d
+*.a
+
+# Binary & Hex Files
+*.elf
+*.hex
+*.bin
+
+# IDE Metadata
+.project
+.cproject
+.settings/
+*.autosave
+.DS_Store
+
+# Temporary Files
+*.swp
+*.swo
+*~
+
+# Build System Files
+Makefile
+subdir.mk
+objects.mk
