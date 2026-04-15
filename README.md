@@ -47,14 +47,18 @@
 
 | Session | Focus | Status |
 |---------|-------|--------|
-| [session_10-04-2026.md](session_10-04-2026.md) | Dead time insertion (PWM safety), performance validation | ✅ Validated |
-| [session_09-04-2026.md](session_09-04-2026.md) | Physics-based motor parameters, code refactoring, firmware ready | ✅ Complete |
-| [session_02-04-2026.md](session_02-04-2026.md) | Oscillation investigation (Kp=0.0065 solution) | ⚠️ Pending re-validation with corrected J/B |
-| [session_31-03-2026.md](session_31-03-2026.md) | Foundation: motor specs, voltage budget, control architecture | Reference |
-| [RIPPLE_MITIGATION_01-04-2026.md](RIPPLE_MITIGATION_01-04-2026.md) | Complete investigation history: 6 attempted solutions | Reference |
-| [motor_parameters_derivation.md](motor_parameters_derivation.md) | Physics-based J & B calculation from iFligh datasheet | Reference |
+| [session_31-03-2026.md](session_31-03-2026.md) | Project foundation: FOC architecture, motor specs, voltage budget, control design | Reference |
+| [session_01-04-2026.md](session_01-04-2026.md) | Simulation validation (flawed model): FOC, PI gains, MTPA | Superseded |
+| [session_02-04-2026.md](session_02-04-2026.md) | Speed controller debugging: 150 Hz oscillation, PI gain issue | Pending re-validation |
+| [session_09-04-2026.md](session_09-04-2026.md) | Code refactoring: variable naming, current/speed loop gains | Complete |
+| [session_10-04-2026.md](session_10-04-2026.md) | Dead time insertion (PWM safety), performance validation | Validated |
+| [session_11-04-2026.md](session_11-04-2026.md) | 3D flange design: custom 3D-printable shaft coupling | Complete |
+| [XMC4700/12_04_2026/12_04_2026_Session_CCU4_Capture_Breakthrough.md](XMC4700/12_04_2026/12_04_2026_Session_CCU4_Capture_Breakthrough.md) | Encoder capture breakthrough: CCU4 config, SEGGER RTT debug | Awaiting HW test |
+| [XMC4700/13_04_2026/13_04_2026_Session_MATLAB_XMC_Integration_Planning.md](XMC4700/13_04_2026/13_04_2026_Session_MATLAB_XMC_Integration_Planning.md) | MATLAB-XMC integration planning: FOC via UART, architecture | Planning |
+| [XMC4700/14_04_2026/14_04_26_HIL_to_RapidPrototyping.md](XMC4700/14_04_2026/14_04_26_HIL_to_RapidPrototyping.md) | HIL to rapid prototyping: abandoned UART, XMC-only control | Complete |
+| [RIPPLE_MITIGATION_01-04-2026.md](RIPPLE_MITIGATION_01-04-2026.md) | Ripple mitigation: investigation history, 6 attempted solutions | Reference |
+| [motor_parameters_derivation.md](motor_parameters_derivation.md) | Motor parameters: physics-based J & B calculation | Reference |
 
----
 
 ## Key Decisions & Trade-offs
 
