@@ -1,7 +1,7 @@
 # XMC4700 PWM Configuration for PMSM FOC — DAVE IDE Setup (CCU8)
 
 **Purpose:** Configure 20 kHz 3-phase sine-triangle PWM with 100 ns dead time using **CCU8 (Capture/Compare Unit 8)** — hardware dead time generator for motor control.  
-**Target Hardware:** XMC4700 Relax Lite Kit (Cortex-M4, 120 MHz)  
+**Target Hardware:** XMC4700 Relax Lite Kit (Cortex-M4, 144 MHz peripheral clock)  
 **FOC Specifications:** Speed loop 200 Hz BW, Current loop 2 kHz BW, Vdc = 59V (sine-triangle modulation)  
 **Timer Module:** CCU8 (native 3-phase motor control support, built-in dead time hardware)
 
@@ -29,16 +29,21 @@
 |---------|-------|-----------|
 | **Module** | CCU8 (Capture/Compare Unit 8) | **Motor-optimized:** Hardware dead time, better slicing |
 | **Slice Assignment** | Slice 0, 1, 2 on CCU80 (or auto) | One per phase: U, V, W |
-| **Input Clock** | Prescaler = 1 (120 MHz → 120 MHz) | Maximum resolution |
-| **PWM Period** | 6000 counts | See calculation below |
+| **Input Clock** | Prescaler = 1 (144 MHz → 144 MHz) | Maximum resolution, NO clock division |
+| **PWM Period** | 7200 counts | See calculation below |
 | **PWM Frequency** | 20 kHz | Matches simulation & control loop |
+| **PWM Resolution** | 6.94 nsec | `1 / 144 MHz` — high precision |  
 | **Shadow Registers** | ✓ Enabled | Synchronous duty update across all slices |
 
 **Frequency Calculation:**  
 ```
 PWM_Frequency = 20 kHz = 50 µs period
-Clock = 120 MHz
-PWM_Period_counts = (120 MHz) / (20 kHz) = 6000 counts
+Clock = 144 MHz (board fixed, from fPLL)
+Prescaler = 1 (NO division)
+PWM_Period_counts = (144 MHz) / (20 kHz) = 7200 counts
+
+Verification:
+Actual_Frequency = 144 MHz / (1 × 7200) = 20,000 Hz ✓
 ```
 
 ---
@@ -48,15 +53,16 @@ PWM_Period_counts = (120 MHz) / (20 kHz) = 6000 counts
 | Setting | Value | Rationale |
 |---------|-------|-----------|
 | **Dead Time Enable** | ✓ Enabled | **CCU8 native dead time hardware** (no logic workarounds needed) |
-| **Dead Time Value** | 12 counts | 12 × (1/120 MHz) = 100 ns (shoot-through protection) |
-| **Dead Time Mode** | Asymmetric (Rising Delay) | Rising edge delayed by 100 ns, falling edge original |
+| **Dead Time Value** | 14 counts | 14 × (1/144 MHz) = 97.2 ns ≈ 100 ns (shoot-through protection) |
+| **Dead Time Mode** | Asymmetric (Rising Delay) | Rising edge delayed by ~100 ns, falling edge original |
 | **Apply to All Slices** | ✓ Yes | Dead time same for U, V, W phases |
 
 **Dead Time Reasoning:**
 - Hardware requirement: 50–200 ns minimum (gate driver + MOSFET propagation delay)
-- **We use 100 ns** (middle of range, proven in simulation via dead time validation in session_10-04-2026.md)
-- **Clock for dead time:** Same 120 MHz clock = 8.33 ns per count
-- **100 ns = 12 counts** (100 / 8.33 ≈ 12)
+- **We use ~100 ns** (middle of range, proven in simulation via dead time validation in session_10-04-2026.md)
+- **Clock for dead time:** 144 MHz clock = 6.94 ns per count
+- **100 ns ÷ 6.94 ns = 14.4 ≈ 14 counts**
+- **Actual:** 14 × 6.94 ns = 97.2 ns ✓
 - **CCU8 Advantage:** Hardware dead time generator automatically applies to complementary outputs (high-side, low-side) — no manual SR FlipFlop logic needed
 
 ---

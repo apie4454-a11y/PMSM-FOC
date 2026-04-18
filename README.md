@@ -1,8 +1,8 @@
 # PMSM Field Oriented Control (FOC) — GM3506 / XMC4700
 
-**Project Status:** Motor parameter derivation + model architecture corrected + physics-based gains calculated + code refactoring complete ✅  
-**Current Session:** [session_09-04-2026.md](session_09-04-2026.md) (Code refactoring + Ki gain analysis + physics-based motor parameters)  
-**Last Updated:** 09-04-2026 ✅ **FIRMWARE READY**
+**Project Status:** ✅ **READY FOR HARDWARE TEST** — SIL validated + decimation fix applied → Embedded firmware on XMC4700 → Encoder feedback integrated → Production-grade control behavior  
+**Current Session:** [session_17-04-2026.md](session_17-04-2026.md) (HIL firmware + encoder feedback: FOC + motor model + PWM + real rotor position; includes decimation investigation & fix)  
+**Last Updated:** 17-04-2026 ✅ **DECIMATION FIX APPLIED TO C CODE — Ready for motor connection**
 
 ---
 
@@ -43,7 +43,44 @@
 
 ---
 
-## Session Files (Reference Archive)
+## 🎯 Three Major Debugging Victories (The Real Story)
+
+This project demonstrates **systematic root-cause analysis** at multiple abstraction levels. Not just one fix, but three separate discoveries:
+
+### **Victory #1: Filter-Induced Phase Lag (Session 02 → Session 09)**
+- **Problem Observed:** 150 Hz oscillation in speed and iq current
+- **False Lead:** Added anti-aliasing filters thinking filtering would help
+- **Root Cause Found:** Filters were adding unwanted phase lag; the oscillation was actually a *model artifact*, not a control tuning issue
+- **Key Insight:** Don't treat symptoms without understanding root causes; more filtering doesn't fix structural problems
+- **Result:** After removing spurious filters, "oscillation" disappeared because it was never a real control problem
+
+### **Victory #2: Block Causality & Execution Order (Session 02 → Session 09)**
+- **Problem Observed:** No amount of PI tuning fixed the oscillation
+- **Root Cause Found:** Motor block executing LAST in the feedback loop (causal ordering wrong)
+- **Impact:** Motor feedback was delayed one sample relative to control output → artificial second-order behavior
+- **Key Insight:** Before you tune gains, verify the block diagram causality is correct
+- **Result:** After reordering blocks, model became well-behaved; original "150 Hz oscillation problem" was purely a Simulink structure issue
+
+### **Victory #3: Execution Rate Mismatch—Speed PI Decimation (Session 16 → Session 17)**
+- **Problem Observed:** SIL validation showed 2-3 cycle damped oscillations during load transients  
+- **False Lead:** Initial thought was PI gains too aggressive; tried Ki reduction (didn't work)
+- **Root Cause Found:** Speed PI running at 20 kHz (function call rate) instead of 2 kHz (design assumption) → 10× timestep error on integrator
+- **Key Insight:** MIL block rates are NOT inherited by SIL functions; you must add decimation explicitly
+- **Result:** Added decimation counter; 4-5 oscillations → 1 small overshoot → clean settlement in < 0.1s (< 50% of previous)
+
+---
+
+## What These Three Victories Demonstrate
+
+**For a Technical Hiring Manager:**
+
+1. **Not a "Try Random Things" Engineer:** Each debugging session followed: observe → hypothesize → test → learn → fix
+2. **Deep Understanding Across Levels:** Caught issues at model architecture (block order), algorithm implementation (decimation), and signal processing (filters)
+3. **Systematic Thinking:** Rather than blame-shift ("bad gains," "bad filters"), investigated root causes at each layer
+4. **Learns from Wrong Answers:** Session 02 tried filters first; later discovered that was wrong and adapted the approach
+5. **Communicates Findings:** Each session documented not just the fix, but the investigation process and lessons learned
+
+---
 
 | Session | Focus | Status |
 |---------|-------|--------|
@@ -56,9 +93,35 @@
 | [XMC4700/12_04_2026/12_04_2026_Session_CCU4_Capture_Breakthrough.md](XMC4700/12_04_2026/12_04_2026_Session_CCU4_Capture_Breakthrough.md) | Encoder capture breakthrough: CCU4 config, SEGGER RTT debug | Awaiting HW test |
 | [XMC4700/13_04_2026/13_04_2026_Session_MATLAB_XMC_Integration_Planning.md](XMC4700/13_04_2026/13_04_2026_Session_MATLAB_XMC_Integration_Planning.md) | MATLAB-XMC integration planning: FOC via UART, architecture | Planning |
 | [XMC4700/14_04_2026/14_04_26_HIL_to_RapidPrototyping.md](XMC4700/14_04_2026/14_04_26_HIL_to_RapidPrototyping.md) | HIL to rapid prototyping: abandoned UART, XMC-only control | Complete |
-| [RIPPLE_MITIGATION_01-04-2026.md](RIPPLE_MITIGATION_01-04-2026.md) | Ripple mitigation: investigation history, 6 attempted solutions | Reference |
+| [session_15-04-2026.md](session_15-04-2026.md) | CCU8 PWM config: 20 kHz, 97.2 ns dead time, hardware verified | Complete |
+| [session_16-04-2026.md](session_16-04-2026.md) | **MIL → SIL transition:** Controller extraction to MATLAB function, SIL validation with test graphs | ✅ Complete |
+| [session_17-04-2026.md](session_17-04-2026.md) | **Embedded HIL firmware + Encoder:** FOC + motor + inverter in C, 20 kHz ISR, real encoder feedback integration | ✅ Complete |
 | [motor_parameters_derivation.md](motor_parameters_derivation.md) | Motor parameters: physics-based J & B calculation | Reference |
 
+
+## ⚠️ Critical Fix: Speed Controller Decimation (17-04-2026)
+
+**Discovery Path:**
+1. **Session 16:** SIL validation showed 2-3 cycle damped oscillations during load transients (oscillations acceptable < 5% but theoretically unexpected)
+2. **Session 17:** Deep investigation revealed root cause — **execution rate mismatch** between MIL (2 kHz block) and SIL (20 kHz function call)
+3. **Fix Applied:** Added decimation counter to speed PI controller:
+   - Counter skips 9 cycles, executes only every 10th call (→ 2 kHz effective)
+   - Holds `iq_ref` and `te_ref` during skip cycles
+   - Ensures PI gains are correct (no 10× integrator error)
+
+**Results After Fix (Verified in SIL):**
+- ❌ Before: 4–5 oscillation cycles, -500 RPM transient settling 200+ ms, noisy response
+- ✅ After: 1 small overshoot → clean settlement in **< 0.1 seconds**, zero oscillations, production-grade behavior
+
+**Implementation in C Code:**
+- File: [XMC4700/17_04_2026/foc_algorithm_xmc.c](XMC4700/17_04_2026/foc_algorithm_xmc.c)
+- See function `foc_step()` — speed loop decimation at top of function
+- Critical struct members: `speed_decimator`, `iq_ref_prev`, `te_ref_prev` in `FOCController`
+
+**Lesson for Future Projects:**
+Execution rate of embedded control functions is NOT inherited from block diagram rates. Must be verified explicitly and add decimation if needed. This is a common SIL→C porting pitfall.
+
+---
 
 ## Key Decisions & Trade-offs
 
@@ -96,15 +159,20 @@
 - Formula-based PI gain calculation ✓
 - Phase 1.1: Speed reference tracking with corrected J/B ✓
 - Phase 1.2: Dead time insertion validation ✓
+- **Phase 1.3: MIL → SIL transition (controller extraction)** ✓
+- **Phase 1.4: SIL validation (MATLAB function with test graphs)** ✓
+- **Phase 2: Embedded C port (FOC + motor + inverter models)** ✓
+- **Phase 2.1: DAVE PWM integration (20 kHz ISR, telemetry, scenarios)** ✓
+- **Phase 2.2: Encoder feedback integration (P1.1 CCU4 capture, real rotor angle)** ✓
 
 **🔄 In Progress:**
-- Phase 1.3-1.5: Full TEST_VALIDATION_PLAN execution (remaining tests)
-- Graph capture for validation report (10-14 graphs from simulation)
+- Phase 2.3: Hardware testing (oscilloscope PWM visualization, UART telemetry validation)
+- Phase 2.4: Closed-loop validation with real encoder feedback
 
 **⏳ Upcoming:**
-- **Phase 2:** Hardware firmware implementation on XMC4700 (gains validated, dead time architecture ready)
-- Phase 3: Bearing block integration + 3-phase hardware test
-- Phase 4: Production firmware deployment
+- Phase 3: Real motor connection (current sensors, 3-phase power stage)
+- Phase 4: Bearing block integration + load test
+- Phase 5: Production firmware deployment
 - Future: Flux-weakening expansion
 
 ---
@@ -115,11 +183,13 @@
 |------|---------|
 | **Motor_Parameters.m** | ✅ Refactored: current.Kp_id/Ki_id/Kp_iq/Ki_iq + speed.Kp_speed/Ki_speed (physics-based J/B) |
 | **motor_parameters_derivation.md** | Physics-based J & B calculation from iFligh datasheet (hollow cylinder + power analysis) |
-| **session_10-04-2026.md** | ✅ **Latest:** Dead time insertion, SR FlipFlop validation, performance tested |
-| **session_09-04-2026.md** | Code refactoring, physics-based motor parameters, firmware ready |
-| **session_31-03-2026.md** | Foundation: Motor specs, voltage budget, control architecture (reference) |
-| **session_02-04-2026.md** | Day 3 investigation (⚠️ findings pending re-validation with corrected J/B) |
-| **RIPPLE_MITIGATION_01-04-2026.md** | Complete investigation history (reference archive) |
+| **session_16-04-2026.md** | ✅ **MIL → SIL:** FOC controller extraction to MATLAB function, SIL validation with test graphs |
+| **foc_algorithm_sil_16_04_26.m** | ✅ FOC algorithm as MATLAB function (C-ready, used in SIL) |
+| **simulation_basic_sil.slx** | ✅ SIL Simulink model with Controllers_as_fcn MATLAB block |
+| **XMC4700/17_04_2026/** | ✅ **Embedded firmware + encoder:** FOC + motor + inverter in C, 20 kHz ISR, real encoder feedback (P1.1 capture working) |
+| **XMC4700/12_04_2026/** | ✅ **Encoder capture foundation:** [CCU4 Capture Breakthrough](XMC4700/12_04_2026/12_04_2026_Session_CCU4_Capture_Breakthrough.md) — PWM loopback (P1.0→P1.1), SEGGER RTT debug setup |
+| **session_10-04-2026.md** | Dead time insertion, SR FlipFlop validation, performance tested |
+| **session_09-04-2026.md** | Code refactoring, physics-based motor parameters, firmware foundation |
 
 ---
 
