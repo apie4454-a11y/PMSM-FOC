@@ -17,15 +17,15 @@
 
 /* PI Gains (physics-based from Motor_Parameters.m) */
 /* Speed loop @ 2 kHz */
-#define SPEED_KP             0.0004732f
-#define SPEED_KI             0.056549f
+#define SPEED_KP             0.004775f   /* J * omega_bw = 3.8e-6 * 1256.6 */
+#define SPEED_KI             0.056549f   /* B * omega_bw = 4.5e-5 * 1256.6 */
 #define SPEED_TS             0.0005f     /* 1/2000 Hz */
 #define SPEED_SAT_LOW        -0.05f
 #define SPEED_SAT_HIGH       0.1f
 
 /* Current loops @ 20 kHz */
-#define CURRENT_KP           37.699f
-#define CURRENT_KI           105560.0f
+#define CURRENT_KP           37.699f     /* L * omega_bw = 0.003 * 12566 */
+#define CURRENT_KI           105560.0f   /* R * omega_bw = 8.4 * 12566 */
 #define CURRENT_TS           5e-5f       /* 1/20000 Hz */
 #define CURRENT_SAT_LOW      -29.5f
 #define CURRENT_SAT_HIGH     29.5f

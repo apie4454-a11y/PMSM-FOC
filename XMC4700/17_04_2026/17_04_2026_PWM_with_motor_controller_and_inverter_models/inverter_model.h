@@ -22,9 +22,9 @@
 
 /* Inverter state structure */
 typedef struct {
-    float vn;   /* Phase A neutral voltage [V] */
-    float vyn;  /* Phase B neutral voltage [V] */
-    float vbn;  /* Phase C neutral voltage [V] */
+    float vrn;  /* Red phase neutral voltage [V] */
+    float vyn;  /* Yellow phase neutral voltage [V] */
+    float vbn;  /* Blue phase neutral voltage [V] */
 } InverterOutput;
 
 /* Inverter model instance */

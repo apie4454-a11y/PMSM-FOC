@@ -106,30 +106,36 @@ static inline Park_Output abc_to_dq(float va, float vb, float vc, float theta) {
 }
 
 /*
- * dq -> abc in one call
+ * dq -> RYB in one call
  * Inputs: d, q (dq voltages), theta (rotor angle)
- * Outputs: va, vb, vc (phase voltages)
+ * Outputs: vr, vy, vb (Red, Yellow, Blue phase voltages)
  * 
- * Note: Assumes balanced 3-phase (vc = -(va+vb))
+ * Note: Assumes balanced 3-phase (vb = -(vr+vy))
  */
 typedef struct {
-    float va;
-    float vb;
-    float vc;
-} ABC_Output;
+    float vr;  /* Red phase voltage */
+    float vy;  /* Yellow phase voltage */
+    float vb;  /* Blue phase voltage */
+} RYB_Output;
 
-static inline ABC_Output dq_to_abc(float d, float q, float theta) {
-    Clarke_Output park_inv = inverse_park_transform(d, q, theta);
+static inline RYB_Output dq_to_ryb(float d, float q, float theta) {
+    /* Step 1: Inverse Park (dq -> αβ) */
+    Clarke_Output alpha_beta = inverse_park_transform(d, q, theta);
+    float alpha = alpha_beta.alpha;
+    float beta = alpha_beta.beta;
     
-    ABC_Output out;
-    const float INV_SQRT3 = 0.57735026919f;
-    const float TWO_INV_3 = 0.66666666667f;
+    /* Step 2: Inverse Clarke (αβ -> RYB) */
+    /* Standard inverse Clarke for balanced 3-phase:
+     * r = α
+     * y = -α/2 + (√3/2)β
+     * b = -α/2 - (√3/2)β
+     */
+    RYB_Output out;
+    const float SQRT3_2 = 0.86602540378f;  /* √3/2 */
     
-    /* Inverse Clarke (less straightforward; using approximation for 3-phase) */
-    /* For balanced 3-phase, if we have α, β, we can reconstruct abc */
-    out.va = TWO_INV_3 * park_inv.alpha;
-    out.vb = -(INV_SQRT3 / 2.0f) * park_inv.alpha + (0.5f) * park_inv.beta;
-    out.vc = -(INV_SQRT3 / 2.0f) * park_inv.alpha - (0.5f) * park_inv.beta;
+    out.vr = alpha;
+    out.vy = -0.5f * alpha + SQRT3_2 * beta;
+    out.vb = -0.5f * alpha - SQRT3_2 * beta;
     
     return out;
 }

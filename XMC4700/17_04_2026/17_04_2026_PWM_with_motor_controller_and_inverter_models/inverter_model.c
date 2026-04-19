@@ -12,7 +12,7 @@
  */
 void inverter_init(InverterModel *inv, float vdc) {
     inv->vdc = vdc;
-    inv->out.vn = 0.0f;
+    inv->out.vrn = 0.0f;
     inv->out.vyn = 0.0f;
     inv->out.vbn = 0.0f;
 }
@@ -50,7 +50,7 @@ void inverter_pwm_to_voltage(InverterModel *inv, float d_a, float d_b, float d_c
     float v_avg = (vro + vyo + vbo) / 3.0f;
     
     /* Phase-to-Neutral voltages (remove common mode) */
-    inv->out.vn = vro - v_avg;
+    inv->out.vrn = vro - v_avg;
     inv->out.vyn = vyo - v_avg;
     inv->out.vbn = vbo - v_avg;
 }
@@ -79,7 +79,7 @@ void inverter_switch_to_voltage(InverterModel *inv,
     float v_avg = (vro + vyo + vbo) / 3.0f;
     
     /* Phase-to-Neutral voltages */
-    inv->out.vn = vro - v_avg;
+    inv->out.vrn = vro - v_avg;
     inv->out.vyn = vyo - v_avg;
     inv->out.vbn = vbo - v_avg;
 }

@@ -48,6 +48,21 @@
 
 /** #include DAVE APP Header files. */
 #include "xmc_common.h"  
+
+#include "CLOCK_XMC4/clock_xmc4.h"
+  
+
+#include "GLOBAL_CCU8/global_ccu8.h"
+  
+
+#include "PWM_CCU8/pwm_ccu8.h"
+  
+
+#include "CPU_CTRL_XMC4/cpu_ctrl_xmc4.h"
+  
+
+#include "UART/uart.h"
+  
 	
 
 /**********************************************************************************************************************

@@ -68,7 +68,20 @@ __WEAK DAVE_STATUS_t DAVE_Init(void)
 {
   DAVE_STATUS_t init_status;
   
-  init_status = DAVE_STATUS_SUCCESS; 
+  init_status = DAVE_STATUS_SUCCESS;
+     /** @Initialization of APPs Init Functions */
+     init_status = (DAVE_STATUS_t)CLOCK_XMC4_Init(&CLOCK_XMC4_0);
+
+  if (init_status == DAVE_STATUS_SUCCESS)
+  {
+	 /**  Initialization of PWM_CCU8 APP instance PWM_CCU8_0 */
+	 init_status = (DAVE_STATUS_t)PWM_CCU8_Init(&PWM_CCU8_0); 
+   } 
+  if (init_status == DAVE_STATUS_SUCCESS)
+  {
+	 /**  Initialization of UART APP instance UART_0 */
+	 init_status = (DAVE_STATUS_t)UART_Init(&UART_0); 
+   }  
   return init_status;
 } /**  End of function DAVE_Init */
 

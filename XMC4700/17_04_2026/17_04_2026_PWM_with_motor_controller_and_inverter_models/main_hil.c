@@ -24,6 +24,9 @@ void hil_init(HIL_State *hil, float vdc, float max_flux) {
     /* Initialize inverter */
     inverter_init(&hil->inverter, vdc);
     
+    /* Compute inverter voltages from initial duty cycles */
+    inverter_pwm_to_voltage(&hil->inverter, hil->duty_a, hil->duty_b, hil->duty_c);
+    
     /* Initialize motor */
     motor_init(&hil->motor, max_flux, MOTOR_TIMESTEP);
     
@@ -54,12 +57,16 @@ void hil_init(HIL_State *hil, float vdc, float max_flux) {
  * 6. Every 10 steps: update speed controller
  */
 void hil_step_foc(HIL_State *hil) {
+    /* ===== INVERTER UPDATE (convert previous FOC outputs to voltages) ===== */
+    /* MUST be before motor steps so motor sees latest voltages */
+    inverter_pwm_to_voltage(&hil->inverter, hil->duty_a, hil->duty_b, hil->duty_c);
+    
     /* ===== MOTOR INTEGRATION (fine timestep) ===== */
     for (uint32_t i = 0; i < MOTOR_STEPS_PER_FOC; i++) {
         /* Get dq voltages from inverter output */
-        /* Inverter outputs abc, need to transform to dq */
+        /* Inverter outputs RYB, need to transform to dq */
         Park_Output dq_volt = abc_to_dq(
-            hil->inverter.out.vn,
+            hil->inverter.out.vrn,
             hil->inverter.out.vyn,
             hil->inverter.out.vbn,
             hil->motor.state.theta_ele
@@ -92,31 +99,31 @@ void hil_step_foc(HIL_State *hil) {
         &hil->vq_ref           /* output: q-voltage ref */
     );
     
-    /* ===== INVERTER (PWM -> abc voltages) ===== */
-    /* Map dq voltages to duty cycles */
+    /* ===== INVERTER CONTROL (PWM mapping) ===== */
+    /* Convert dq voltages to RYB via proper Park/Clarke inverse */
+    RYB_Output ryb_volt = dq_to_ryb(hil->vd_ref, hil->vq_ref, hil->motor.state.theta_ele);
+    
+    /* Map RYB voltages to duty cycles [0, 6000] */
     const float DUTY_CENTER = 3000.0f;
     const float DUTY_MAX_SWING = 3000.0f;
-    const float VDC = 59.4f;
+    const float VDC_2 = 29.7f;  /* Vdc/2 = 59.4/2 */
     
-    /* Simple linear mapping: vd,vq -> duty cycles */
-    float duty_a_f = DUTY_CENTER + (hil->vd_ref / VDC) * DUTY_MAX_SWING;
-    float duty_b_f = DUTY_CENTER - (hil->vd_ref / (2.0f * VDC)) * DUTY_MAX_SWING + (0.866f * hil->vq_ref / VDC) * DUTY_MAX_SWING;
-    float duty_c_f = DUTY_CENTER - (hil->vd_ref / (2.0f * VDC)) * DUTY_MAX_SWING - (0.866f * hil->vq_ref / VDC) * DUTY_MAX_SWING;
+    float duty_r_f = DUTY_CENTER + (ryb_volt.vr / VDC_2) * DUTY_MAX_SWING;
+    float duty_y_f = DUTY_CENTER + (ryb_volt.vy / VDC_2) * DUTY_MAX_SWING;
+    float duty_b_f = DUTY_CENTER + (ryb_volt.vb / VDC_2) * DUTY_MAX_SWING;
     
     /* Clamp to valid range [0, 6000] */
-    if (duty_a_f < 0.0f) duty_a_f = 0.0f;
-    if (duty_a_f > 6000.0f) duty_a_f = 6000.0f;
+    if (duty_r_f < 0.0f) duty_r_f = 0.0f;
+    if (duty_r_f > 6000.0f) duty_r_f = 6000.0f;
+    if (duty_y_f < 0.0f) duty_y_f = 0.0f;
+    if (duty_y_f > 6000.0f) duty_y_f = 6000.0f;
     if (duty_b_f < 0.0f) duty_b_f = 0.0f;
     if (duty_b_f > 6000.0f) duty_b_f = 6000.0f;
-    if (duty_c_f < 0.0f) duty_c_f = 0.0f;
-    if (duty_c_f > 6000.0f) duty_c_f = 6000.0f;
     
-    hil->duty_a = duty_a_f;
-    hil->duty_b = duty_b_f;
-    hil->duty_c = duty_c_f;
-    
-    /* Convert duty cycles to motor voltages */
-    inverter_pwm_to_voltage(&hil->inverter, hil->duty_a, hil->duty_b, hil->duty_c);
+    /* Store duty cycles for NEXT cycle's inverter update */
+    hil->duty_a = duty_r_f;
+    hil->duty_b = duty_y_f;
+    hil->duty_c = duty_b_f;
     
     /* ===== SPEED LOOP DECIMATION (2 kHz) ===== */
     hil->foc_counter++;
