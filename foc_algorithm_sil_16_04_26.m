@@ -1,5 +1,5 @@
 function [vd_ref, vq_ref, id_out, iq_out, te_out, speed_error] = ...
-    foc_algorithm_sil(id_motor, iq_motor, motor_rpm, omega_ele, speed_ref, max_flux)
+    foc_algorithm_sil_16_04_26(id_motor, iq_motor, motor_rpm, omega_ele, speed_ref, max_flux)
 %
 % FOC ALGORITHM FOR SIL (Software-in-Loop) Testing
 % Matches Simulink Model Exactly (16-04-2026)
@@ -34,9 +34,12 @@ persistent iq_ref_prev;
 persistent te_ref_prev;
 
 if isempty(speed_pi)
-    speed_pi.Kp = 0.0004732 * 1;      
-    speed_pi.Ki = 0.056549 * 1; 
-    speed_pi.Ts = 0.0005;    % 1/2000 Hz
+    % Gains from Motor_Parameters.m (CORRECTED 18-04-2026)
+    % speed.Kp_speed = motor.J * speed.omega_bw = 3.8e-6 * 1256.6 = 0.004775
+    % speed.Ki_speed = motor.B * speed.omega_bw = 4.5e-5 * 1256.6 = 0.056549
+    speed_pi.Kp = 0.004775;      % CORRECTED from 0.0004732 (10x gain fix)
+    speed_pi.Ki = 0.056549; 
+    speed_pi.Ts = 0.0005;        % 1/2000 Hz
     speed_pi.i_state = 0;
     speed_pi.sat_low = -0.05;
     speed_pi.sat_high = 0.1;
@@ -51,9 +54,12 @@ speed_counter = speed_counter + 1;
 % ========== d-AXIS PI CONTROLLER STATE ==========
 persistent id_pi;
 if isempty(id_pi)
+    % Gains from Motor_Parameters.m
+    % current.Kp_id = motor.L * current.omega_bw = 0.003 * 12566.4 = 37.699
+    % current.Ki_id = motor.R * current.omega_bw = 8.4 * 12566.4 = 105557.76
     id_pi.Kp = 37.699;
     id_pi.Ki = 105560;
-    id_pi.Ts = 5e-5;    % 1/20000 Hz (20 kHz)
+    id_pi.Ts = 5e-5;             % 1/20000 Hz (20 kHz)
     id_pi.i_state = 0;
     id_pi.sat_low = -29.5;
     id_pi.sat_high = 29.5;
@@ -62,6 +68,7 @@ end
 % ========== q-AXIS PI CONTROLLER STATE ==========
 persistent iq_pi;
 if isempty(iq_pi)
+    % Gains from Motor_Parameters.m (same as d-axis for PMSM)
     iq_pi.Kp = 37.699;
     iq_pi.Ki = 105560;
     iq_pi.Ts = 5e-5;

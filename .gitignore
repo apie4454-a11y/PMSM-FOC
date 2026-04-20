@@ -26,3 +26,20 @@ Thumbs.db
 
 # Git
 .git/
+
+# DAVE Project
+Dave/
+Debug/
+Release/
+build/
+.settings/
+.cproject
+.project
+
+# Embedded build artifacts
+*.o
+*.d
+*.elf
+*.hex
+*.map
+*.lst
