@@ -51,10 +51,21 @@
   <nodes xsi:type="ApplicationModel:PeripheralNode">
     <resource xsi:type="ResourceModel:Peripheral" href="HW_RESOURCES/usic0/usic0_0.dd#/"/>
   </nodes>
+  <nodes xsi:type="ApplicationModel:AppNode">
+    <resource xsi:type="ResourceModel:App" href="APPS/SPI_MASTER/v4_3_30/SPI_MASTER_0.app#/"/>
+  </nodes>
+  <nodes xsi:type="ApplicationModel:PeripheralNode">
+    <resource xsi:type="ResourceModel:Peripheral" href="HW_RESOURCES/port3/port3_3.dd#/"/>
+  </nodes>
+  <nodes xsi:type="ApplicationModel:PeripheralNode">
+    <resource xsi:type="ResourceModel:Peripheral" href="HW_RESOURCES/usic2/usic2_2.dd#/"/>
+  </nodes>
   <connections xsi:type="ApplicationModel:NodeConnection" source="//@nodes.0" target="//@nodes.1"/>
   <connections xsi:type="ApplicationModel:NodeConnection" source="//@nodes.2" target="//@nodes.0"/>
   <connections xsi:type="ApplicationModel:NodeConnection" source="//@nodes.12" target="//@nodes.1"/>
   <connections xsi:type="ApplicationModel:NodeConnection" source="//@nodes.12" target="//@nodes.11"/>
+  <connections xsi:type="ApplicationModel:NodeConnection" source="//@nodes.17" target="//@nodes.1"/>
+  <connections xsi:type="ApplicationModel:NodeConnection" source="//@nodes.17" target="//@nodes.11"/>
   <hwConnections href="APPS/GLOBAL_CCU8/v4_1_14/GLOBAL_CCU8_0.app#//@connections.0"/>
   <hwConnections href="APPS/CLOCK_XMC4/v4_0_24/CLOCK_XMC4_0.app#//@connections.0"/>
   <hwConnections href="APPS/CLOCK_XMC4/v4_0_24/CLOCK_XMC4_0.app#//@connections.5"/>
@@ -95,4 +106,37 @@
   <hwConnections href="APPS/UART/v4_1_14/UART_0.app#//@connections.19"/>
   <hwConnections href="APPS/UART/v4_1_14/UART_0.app#//@connections.20"/>
   <hwConnections href="APPS/UART/v4_1_14/UART_0.app#//@connections.21"/>
+  <hwConnections href="APPS/SPI_MASTER/v4_3_30/SPI_MASTER_0.app#//@connections.7"/>
+  <hwConnections href="APPS/SPI_MASTER/v4_3_30/SPI_MASTER_0.app#//@connections.9"/>
+  <hwConnections href="APPS/SPI_MASTER/v4_3_30/SPI_MASTER_0.app#//@connections.14"/>
+  <hwConnections href="APPS/SPI_MASTER/v4_3_30/SPI_MASTER_0.app#//@connections.15"/>
+  <hwConnections href="APPS/SPI_MASTER/v4_3_30/SPI_MASTER_0.app#//@connections.24"/>
+  <hwConnections href="APPS/SPI_MASTER/v4_3_30/SPI_MASTER_0.app#//@connections.27"/>
+  <hwConnections href="APPS/SPI_MASTER/v4_3_30/SPI_MASTER_0.app#//@connections.28"/>
+  <hwConnections href="APPS/SPI_MASTER/v4_3_30/SPI_MASTER_0.app#//@connections.30"/>
+  <hwConnections href="APPS/SPI_MASTER/v4_3_30/SPI_MASTER_0.app#//@connections.31"/>
+  <hwConnections href="APPS/SPI_MASTER/v4_3_30/SPI_MASTER_0.app#//@connections.32"/>
+  <hwConnections href="APPS/SPI_MASTER/v4_3_30/SPI_MASTER_0.app#//@connections.33"/>
+  <hwConnections href="APPS/SPI_MASTER/v4_3_30/SPI_MASTER_0.app#//@connections.34"/>
+  <hwConnections href="APPS/SPI_MASTER/v4_3_30/SPI_MASTER_0.app#//@connections.35"/>
+  <hwConnections href="APPS/SPI_MASTER/v4_3_30/SPI_MASTER_0.app#//@connections.36"/>
+  <hwConnections href="APPS/SPI_MASTER/v4_3_30/SPI_MASTER_0.app#//@connections.37"/>
+  <hwConnections href="APPS/SPI_MASTER/v4_3_30/SPI_MASTER_0.app#//@connections.38"/>
+  <hwConnections href="APPS/SPI_MASTER/v4_3_30/SPI_MASTER_0.app#//@connections.39"/>
+  <hwConnections href="APPS/SPI_MASTER/v4_3_30/SPI_MASTER_0.app#//@connections.40"/>
+  <hwConnections href="APPS/SPI_MASTER/v4_3_30/SPI_MASTER_0.app#//@connections.41"/>
+  <hwConnections href="APPS/SPI_MASTER/v4_3_30/SPI_MASTER_0.app#//@connections.42"/>
+  <hwConnections href="APPS/SPI_MASTER/v4_3_30/SPI_MASTER_0.app#//@connections.43"/>
+  <hwConnections href="APPS/SPI_MASTER/v4_3_30/SPI_MASTER_0.app#//@connections.44"/>
+  <hwConnections href="APPS/SPI_MASTER/v4_3_30/SPI_MASTER_0.app#//@connections.45"/>
+  <hwConnections href="APPS/SPI_MASTER/v4_3_30/SPI_MASTER_0.app#//@connections.46"/>
+  <hwConnections href="APPS/SPI_MASTER/v4_3_30/SPI_MASTER_0.app#//@connections.47"/>
+  <hwConnections href="APPS/SPI_MASTER/v4_3_30/SPI_MASTER_0.app#//@connections.48"/>
+  <hwConnections href="APPS/SPI_MASTER/v4_3_30/SPI_MASTER_0.app#//@connections.49"/>
+  <hwConnections href="APPS/SPI_MASTER/v4_3_30/SPI_MASTER_0.app#//@connections.50"/>
+  <hwConnections href="APPS/SPI_MASTER/v4_3_30/SPI_MASTER_0.app#//@connections.51"/>
+  <hwConnections href="APPS/SPI_MASTER/v4_3_30/SPI_MASTER_0.app#//@connections.52"/>
+  <hwConnections href="APPS/SPI_MASTER/v4_3_30/SPI_MASTER_0.app#//@connections.53"/>
+  <hwConnections href="APPS/SPI_MASTER/v4_3_30/SPI_MASTER_0.app#//@connections.54"/>
+  <hwConnections href="APPS/SPI_MASTER/v4_3_30/SPI_MASTER_0.app#//@connections.55"/>
 </ApplicationModel:ApplicationData>

@@ -2,6 +2,7 @@
 <ResourceModel:App xmi:version="2.0" xmlns:xmi="http://www.omg.org/XMI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:ResourceModel="http://www.infineon.com/Davex/Resource.ecore" name="CLOCK_XMC4" URI="http://resources/4.0.24/app/CLOCK_XMC4/0" description="CLOCK_XMC4 APP configures system and peripheral clocks." version="4.0.24" minDaveVersion="4.0.0" instanceLabel="CLOCK_XMC4_0" appLabel="">
   <upwardMapList xsi:type="ResourceModel:RequiredApp" href="../../GLOBAL_CCU8/v4_1_14/GLOBAL_CCU8_0.app#//@requiredApps.0"/>
   <upwardMapList xsi:type="ResourceModel:RequiredApp" href="../../UART/v4_1_14/UART_0.app#//@requiredApps.0"/>
+  <upwardMapList xsi:type="ResourceModel:RequiredApp" href="../../SPI_MASTER/v4_3_30/SPI_MASTER_0.app#//@requiredApps.0"/>
   <properties singleton="true" provideInit="true" sharable="true"/>
   <virtualSignals name="clk_perbridge_output" URI="http://resources/4.0.24/app/CLOCK_XMC4/0/vs_fpb" hwSignal="fpb" hwResource="//@hwResources.3" visible="true"/>
   <virtualSignals name="clk_ccu_output" URI="http://resources/4.0.24/app/CLOCK_XMC4/0/vs_fccu" hwSignal="fccu" hwResource="//@hwResources.5" visible="true">
