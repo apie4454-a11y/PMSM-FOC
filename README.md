@@ -1,8 +1,8 @@
 # PMSM Field Oriented Control (FOC) — GM3506 / XMC4700
 
-**Project Status:** ✅ **READY FOR HARDWARE TEST** — SIL validated + decimation fix applied → Embedded firmware on XMC4700 → Encoder feedback integrated → Production-grade control behavior  
-**Current Session:** [session_17-04-2026.md](session_17-04-2026.md) (HIL firmware + encoder feedback: FOC + motor model + PWM + real rotor position; includes decimation investigation & fix)  
-**Last Updated:** 17-04-2026 ✅ **DECIMATION FIX APPLIED TO C CODE — Ready for motor connection**
+**Project Status:** ✅ **HARDWARE VALIDATION COMPLETE** — Three bugs fixed + dq→RYB math validated on XMC4700 → Coordinate transform working + UART handshake protocol proven  
+**Current Session:** [session_19-04-2026.md](session_19-04-2026.md) (Motor control validation: 3 critical bugs fixed + dq→RYB coordinate transform tested + UART/MATLAB integration)  
+**Last Updated:** 19-04-2026 ✅ **THREE BUG FIXES VALIDATED + COORDINATE MATH PROVEN IN HARDWARE**
 
 ---
 
@@ -96,6 +96,7 @@ This project demonstrates **systematic root-cause analysis** at multiple abstrac
 | [session_15-04-2026.md](session_15-04-2026.md) | CCU8 PWM config: 20 kHz, 97.2 ns dead time, hardware verified | Complete |
 | [session_16-04-2026.md](session_16-04-2026.md) | **MIL → SIL transition:** Controller extraction to MATLAB function, SIL validation with test graphs | ✅ Complete |
 | [session_17-04-2026.md](session_17-04-2026.md) | **Embedded HIL firmware + Encoder:** FOC + motor + inverter in C, 20 kHz ISR, real encoder feedback integration | ✅ Complete |
+| [session_19-04-2026.md](session_19-04-2026.md) | **Motor Control Hardware Validation:** Three critical bugs fixed (inverter timing, flux constant, display format) + dq→RYB coordinate transform tested via UART handshake + step-counter decoupling for deterministic sampling | ✅ Complete |
 | [motor_parameters_derivation.md](motor_parameters_derivation.md) | Motor parameters: physics-based J & B calculation | Reference |
 
 
@@ -164,15 +165,16 @@ Execution rate of embedded control functions is NOT inherited from block diagram
 - **Phase 2: Embedded C port (FOC + motor + inverter models)** ✓
 - **Phase 2.1: DAVE PWM integration (20 kHz ISR, telemetry, scenarios)** ✓
 - **Phase 2.2: Encoder feedback integration (P1.1 CCU4 capture, real rotor angle)** ✓
+- **Phase 2.3: Hardware validation (motor control bug fixes + coordinate transform testing)** ✓
 
 **🔄 In Progress:**
-- Phase 2.3: Hardware testing (oscilloscope PWM visualization, UART telemetry validation)
-- Phase 2.4: Closed-loop validation with real encoder feedback
+- **Phase 3: SPWM modulation integration** (20_04_2026 project: pwm_modulator debugging with dq→RYB math)
+- Phase 2.4: Closed-loop validation with real encoder feedback (motor tracking under load)
 
 **⏳ Upcoming:**
-- Phase 3: Real motor connection (current sensors, 3-phase power stage)
-- Phase 4: Bearing block integration + load test
-- Phase 5: Production firmware deployment
+- Phase 4: Real motor connection (current sensors, 3-phase power stage)
+- Phase 5: Bearing block integration + load test
+- Phase 6: Production firmware deployment
 - Future: Flux-weakening expansion
 
 ---
@@ -184,6 +186,10 @@ Execution rate of embedded control functions is NOT inherited from block diagram
 | **Motor_Parameters.m** | ✅ Refactored: current.Kp_id/Ki_id/Kp_iq/Ki_iq + speed.Kp_speed/Ki_speed (physics-based J/B) |
 | **motor_parameters_derivation.md** | Physics-based J & B calculation from iFligh datasheet (hollow cylinder + power analysis) |
 | **session_16-04-2026.md** | ✅ **MIL → SIL:** FOC controller extraction to MATLAB function, SIL validation with test graphs |
+| **session_17-04-2026.md** | ✅ **Embedded firmware + encoder:** FOC + motor + inverter in C, 20 kHz ISR, real encoder feedback |
+| **session_19-04-2026.md** | ✅ **Hardware validation:** Three critical bugs fixed (inverter timing, flux constant, display) + dq→RYB coordinate transform tested + UART handshake proven |
+| **dq_to_abc_stream_uart.m** | ✅ Real-time MATLAB script: validates coordinate transform, UART handshake, plots Vr/Vy/Vb with 120° phase separation |
+| **XMC4700/20_04_2026/** | 🔄 **SPWM integration project (IN PROGRESS):** Clone of 17_04_2026, debugging pwm_modulator_step() with dq→RYB math |
 | **foc_algorithm_sil_16_04_26.m** | ✅ FOC algorithm as MATLAB function (C-ready, used in SIL) |
 | **simulation_basic_sil.slx** | ✅ SIL Simulink model with Controllers_as_fcn MATLAB block |
 | **XMC4700/17_04_2026/** | ✅ **Embedded firmware + encoder:** FOC + motor + inverter in C, 20 kHz ISR, real encoder feedback (P1.1 capture working) |
@@ -217,16 +223,6 @@ $$\sqrt{V_d^2 + V_q^2} \leq \frac{V_{dc}}{2} = 29.5V \quad \text{(Sine-Triangle)
 - **Need architecture foundation?** Read [session_31-03-2026.md](session_31-03-2026.md) (motor specs, voltage budget, control design)
 - **Full investigation history?** See [RIPPLE_MITIGATION_01-04-2026.md](RIPPLE_MITIGATION_01-04-2026.md) (all 6 attempted solutions)
 - **Ready for validation?** Execute [TEST_VALIDATION_PLAN.md](TEST_VALIDATION_PLAN.md) (16 tests)
-
----
-
-## Important: Day 3 Findings Pending Re-Validation ⚠️
-
-Day 3 identified a 150 Hz oscillation and proposed Kp=0.0065 (76% de-rating) as the solution. **However**, this solution was developed with incorrect motor parameters (J was 5.8× too high, B was 45× too low).
-
-**Status:** The Kp=0.0065 solution **needs re-validation with corrected physics-based J/B parameters**. The 150 Hz oscillation itself may not exist with accurate motor parameters, or may require very different tuning.
-
-**Next Step:** Run Phase 1.1 validation test using current-loop control with correct J/B before implementing hardware. The true root cause may differ from the Day 3 diagnosis.
 
 ---
 
