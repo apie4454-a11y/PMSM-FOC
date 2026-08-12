@@ -1,8 +1,8 @@
 # PMSM Field Oriented Control (FOC) — GM3506 / XMC4700
 
-**Project Status:** ✅ **EKF OBSERVER VALIDATED** — Open-loop FOC on hardware + RTT streaming + Motor model integrated + **EKF state estimation from currents alone (observer-based angle & speed)**  
-**Current Session:** [session_10-08-2026.md](session_10-08-2026.md) (Extended Kalman Filter: motor state estimation from current measurements, validated in SIL, handles load transients robustly)  
-**Last Updated:** 10-08-2026 ✅ **EKF IMPLEMENTATION COMPLETE + VALIDATED**
+**Project Status:** ✅ **STABILITY ANALYSIS COMPLETE** — FOC architecture verified via Bode/Nyquist/Nichols plots; Phase Margin 77.7° (current loops), 95.2° (speed loop); cascaded design decoupling validated  
+**Current Session:** [session_11_08_2026.md](session_11_08_2026.md) (Closed-loop stability analysis: linearization setup, Bode/Nyquist/Nichols plots for all 3 loops, phase/gain margin verification, Nyquist encirclement test, sampling theorem validation)  
+**Last Updated:** 11-08-2026 ✅ **FREQUENCY-DOMAIN STABILITY VERIFIED**
 
 ---
 
@@ -102,6 +102,7 @@ This project demonstrates **systematic root-cause analysis** at multiple abstrac
 | [session_25-04-2026.md](session_25-04-2026.md) | **Motor Model Integration & Closed-Loop:** Motor model in firmware loop + CSV schema evolution + Generic plotter tools (MATLAB/Python) + Closed-loop FOC profiles + Firmware build resolution | ✅ Complete |
 | [session_07-05-2026.md](session_07-05-2026.md) | **TLE9879 BLDC Shield Discovery:** Critical discovery — TLE9879QXA40 contains embedded ARM M3 + pre-programmed FOC + SPI-configurable (NOT dumb gate driver) | ✅ Complete |
 | [session_10-08-2026.md](session_10-08-2026.md) | **Extended Kalman Filter (EKF) Design & Implementation:** State estimation from current measurements alone (i_α, i_β); α-β frame to avoid θ dependency; validates observability without encoder; robust to load transients; validated in SIL | ✅ Complete |
+| [session_11_08_2026.md](session_11_08_2026.md) | **Closed-Loop Stability Analysis:** Linearization via loop breaks in Control System Designer; Bode/Nyquist/Nichols plots for Id/Iq/speed loops; Phase Margin 77.7° (current), 95.2° (speed); Gain Margin ~70 dB (current), >6 dB (speed); Sampling theorem validation (BW << Nyquist); 100× cascade frequency separation verified | ✅ Complete |
 | [motor_parameters_derivation.md](motor_parameters_derivation.md) | Motor parameters: physics-based J & B calculation | Reference |
 
 
@@ -191,27 +192,64 @@ Execution rate of embedded control functions is NOT inherited from block diagram
 
 ---
 
-## Working Files
+## Active Work Streams
 
-| File | Purpose |
-|------|---------|
-| **Motor_Parameters.m** | ✅ Refactored: current.Kp_id/Ki_id/Kp_iq/Ki_iq + speed.Kp_speed/Ki_speed (physics-based J/B) |
-| **motor_parameters_derivation.md** | Physics-based J & B calculation from iFligh datasheet (hollow cylinder + power analysis) |
-| **session_16-04-2026.md** | ✅ **MIL → SIL:** FOC controller extraction to MATLAB function, SIL validation with test graphs |
-| **session_17-04-2026.md** | ✅ **Embedded firmware + encoder:** FOC + motor + inverter in C, 20 kHz ISR, real encoder feedback |
-| **session_19-04-2026.md** | ✅ **Hardware validation:** Three critical bugs fixed (inverter timing, flux constant, display) + dq→RYB coordinate transform tested + UART handshake proven |
-| **session_24-04-2026.md** | ✅ **RTT streaming:** Autonomous data streaming, removed UART blocking, CSV integration, theta + inverter validation |
-| **session_25-04-2026.md** | ✅ **Motor model + closed-loop:** Open-loop FOC on hardware, motor dynamics in firmware, CSV schema 16-column, generic plotter, speed profiles |
-| **session_07-05-2026.md** | ✅ **TLE9879 discovery:** Embedded ARM M3 FOC controller, SPI configuration, pre-programmed firmware |
-| **session_10-08-2026.md** | ✅ **EKF observer:** Extended Kalman Filter design (α-β frame), 4-state estimation, SIL validation (convergence, load transient robustness, ripple analysis) |
-| **dq_to_abc_stream_uart.m** | ✅ Real-time MATLAB script: validates coordinate transform, UART handshake, plots Vr/Vy/Vb with 120° phase separation |
-| **XMC4700/20_04_2026/** | 🔄 **SPWM integration project (IN PROGRESS):** Clone of 17_04_2026, debugging pwm_modulator_step() with dq→RYB math |
-| **foc_algorithm_sil_16_04_26.m** | ✅ FOC algorithm as MATLAB function (C-ready, used in SIL) |
-| **simulation_basic_sil.slx** | ✅ SIL Simulink model with Controllers_as_fcn MATLAB block |
-| **XMC4700/17_04_2026/** | ✅ **Embedded firmware + encoder:** FOC + motor + inverter in C, 20 kHz ISR, real encoder feedback (P1.1 capture working) |
-| **XMC4700/12_04_2026/** | ✅ **Encoder capture foundation:** [CCU4 Capture Breakthrough](XMC4700/12_04_2026/12_04_2026_Session_CCU4_Capture_Breakthrough.md) — PWM loopback (P1.0→P1.1), SEGGER RTT debug setup |
-| **session_10-04-2026.md** | Dead time insertion, SR FlipFlop validation, performance tested |
-| **session_09-04-2026.md** | Code refactoring, physics-based motor parameters, firmware foundation |
+### MATLAB/Simulink (Model Development & Validation)
+- ✅ **EKF observer design** [session_10-08-2026.md](session_10-08-2026.md) — State estimation from currents alone; α-β frame; observability proven; SIL validated
+- ✅ **Closed-loop stability analysis** [session_11_08_2026.md](session_11_08_2026.md) — Bode/Nyquist/Nichols linearization; PM/GM verified for all 3 loops; sampling theorem validated
+- 🔄 **Next:** Parameter sensitivity sweeps (Lq/Rs/Vdc variations), time-domain transient validation
+
+### XMC4700 Firmware (Embedded FOC Implementation)
+- ✅ **Base firmware** [session_17-04-2026.md](session_17-04-2026.md) — FOC + motor model + PWM in C; 20 kHz ISR; real encoder feedback (CCU4 capture)
+- ✅ **Motor model integration** [session_25-04-2026.md](session_25-04-2026.md) — Motor dynamics in firmware loop; RTT autonomous streaming; CSV 16-column telemetry
+- 🔄 **Ongoing:** Closed-loop speed control refinement, load transient testing
+- ⏳ **Blocked on:** Current sensors (ADC integration), hardware characterization
+
+### Hardware Validation (Motor & System Testing)
+- ✅ **Coordinate transform validation** [session_19-04-2026.md](session_19-04-2026.md) — dq↔abc math proven via UART handshake; inverter timing corrected; 3 critical bugs fixed
+- ✅ **RTT streaming & telemetry** [session_24-04-2026.md](session_24-04-2026.md) — Autonomous data logging (no UART blocking); J-Scope integration; CSV export
+- 🔄 **Ongoing:** Performance profiling under load, noise characterization
+- ⏳ **Upcoming:** Bearing block integration, 3-phase current sensors
+
+### Discovery & Architecture (Post-TLE9879)
+- ✅ **TLE9879 embedded FOC discovery** [session_07-05-2026.md](session_07-05-2026.md) — Power shield contains ARM M3 with pre-programmed FOC; SPI-configurable
+- 🔄 **Exploring:** Master/slave architecture implications, firmware integration strategy
+
+---
+
+## Working Files — Organized by Active Stream
+
+**MATLAB/Simulink (Model):**
+| File | Purpose | Status |
+|------|---------|--------|
+| [session_11_08_2026.md](session_11_08_2026.md) | Stability analysis: linearization setup, Bode/Nyquist/Nichols plots, PM/GM margins | ✅ Complete |
+| [session_10-08-2026.md](session_10-08-2026.md) | EKF observer design (α-β frame, observability, SIL validation) | ✅ Complete |
+| [simulation_basic_sil.slx](simulation_basic_sil.slx) | Full FOC system model with motor, controllers, inverter | ✅ Reference |
+| [foc_algorithm_sil_16_04_26.m](foc_algorithm_sil_16_04_26.m) | FOC controller as MATLAB function (C-ready, used in SIL) | ✅ Reference |
+| [Motor_Parameters.m](Motor_Parameters.m) | PI gain calculator (physics-based, Ts-aware) | ✅ Active |
+| [motor_parameters_derivation.md](motor_parameters_derivation.md) | J & B calculation from datasheet | ✅ Reference |
+
+**XMC4700 Firmware:**
+| File | Purpose | Status |
+|------|---------|--------|
+| [XMC4700/17_04_2026/](XMC4700/17_04_2026/) | **Base firmware:** FOC + motor model + encoder + PWM (20 kHz ISR, real feedback) | ✅ Active |
+| [XMC4700/25_04_2026/](XMC4700/25_04_2026/) | **Motor model integration:** Closed-loop control, RTT streaming, CSV telemetry | ✅ Active |
+| [XMC4700/20_04_2026/](XMC4700/20_04_2026/) | SPWM integration project (debugging pwm_modulator_step) | 🔄 On hold |
+| [XMC4700/12_04_2026/](XMC4700/12_04_2026/) | Encoder capture foundation (CCU4 config, SEGGER RTT debug setup) | ✅ Reference |
+
+**Hardware & Validation:**
+| File | Purpose | Status |
+|------|---------|--------|
+| [session_19-04-2026.md](session_19-04-2026.md) | Hardware validation: coordinate transforms, bug fixes, UART handshake | ✅ Complete |
+| [session_24-04-2026.md](session_24-04-2026.md) | RTT streaming breakthrough: autonomous data logging, CSV integration | ✅ Complete |
+| [dq_to_abc_stream_uart.m](dq_to_abc_stream_uart.m) | Real-time transform validation script (UART handshake, live plots) | ✅ Active |
+
+**Reference & Foundation:**
+| File | Purpose | Status |
+|------|---------|--------|
+| [session_31-03-2026.md](session_31-03-2026.md) | Project foundation: FOC architecture, motor specs, voltage budget | ✅ Reference |
+| [session_09-04-2026.md](session_09-04-2026.md) | Code refactoring, physics-based motor parameters | ✅ Reference |
+| [session_10-04-2026.md](session_10-04-2026.md) | Dead time insertion, SR FlipFlop validation | ✅ Reference |
 
 ---
 

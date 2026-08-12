@@ -8,11 +8,13 @@ motor.name = 'iPower GM3506 Gimbal Motor';
 
 % Phase resistance [Ohm]
 motor.R_phase = 5.6;               % Per-phase (datasheet)
-motor.R = 8.4;                     % d-q equivalent with 2/3 amplitude-invariant Clarke transform (3/2 * R_phase)
+motor.R = motor.R_phase;           % one version of gemini tells no need to scale down
+%motor.R = 8.4;                     % d-q equivalent with 2/3 amplitude-invariant Clarke transform (3/2 * R_phase)
 
 % Phase inductance [H]
 motor.L_phase = 0.002;             % Per-phase inductance (2 mH)
-motor.L = 0.003;                   % d-q equivalent with 3/2 scaling (1.5 * L_phase)
+motor.L = motor.L_phase;           % one version of gemini tells no need to scale down
+%motor.L = 0.003;                   % d-q equivalent with 3/2 scaling (1.5 * L_phase)
 
 % KV Rating and Back EMF Constant
 motor.Kv = 141.4;                  % Derived from 2262 RPM / 16V (datasheet average, no-load)

@@ -1,7 +1,7 @@
 # PMSM Field Oriented Control (FOC) — GM3506 / XMC4700
 
-**Status:** ✅ **EKF Observer Validated** — Open-loop FOC running + RTT streaming + Motor model integrated + **EKF state estimation from currents alone (no encoder needed)**  
-**Last Updated:** 10-08-2026
+**Status:** ✅ **Stability Analysis Complete** — Closed-loop FOC verified via Bode/Nyquist/Nichols plots; Phase Margin 77.7° (current), 95.2° (speed); cascaded design validated  
+**Last Updated:** 11-08-2026
 
 ## What Is This?
 
@@ -14,7 +14,7 @@ A complete **Field Oriented Control (FOC) implementation** for a high-speed gimb
 ✅ **Triple-loop cascaded control system** — Speed → Torque → Current (2 kHz, 20 kHz, 20 kHz respectively)  
 ✅ **Physics-based motor parameters** — Derived J & B from iFligh datasheet; validated against motor datasheet constants  
 ✅ **Formula-driven PI gains** — No empirical tuning; all gains derived from control theory (bandwidth, inertia, resistance)  
-✅ **Stability margins verified** — Phase Margin 77.7° (current loops), 95.2° (speed loop); Bode/Nyquist/Nichols analysis complete  
+✅ **Stability margins verified** — Phase Margin 77.7° (current loops), 95.2° (speed loop); Bode/Nyquist/Nichols analysis complete with linearization methodology  
 ✅ **Coordinate transforms validated on hardware** — dq↔abc math proven correct via UART handshake with real motor  
 ✅ **Real encoder feedback** — XMC4700 CCU4 capture module integrated; rotor angle feedback working at 1 MHz  
 ✅ **PWM dead time** — Hardware SR FlipFlop reconstruction validated (97.2 ns dead time, < 100 ns spec)  
@@ -52,6 +52,7 @@ A complete **Field Oriented Control (FOC) implementation** for a high-speed gimb
 | XMC4700 firmware | ✅ Complete | FOC + motor model + PWM in C, 1 MHz loop |
 | Encoder integration | ✅ Complete | CCU4 capture, real rotor feedback |
 | Hardware validation | ✅ Complete | 3 bugs fixed, dq→abc math proven, UART confirmed |
+| Closed-loop stability analysis | ✅ Complete | Linearization + Bode/Nyquist/Nichols plots; PM/GM verified for all 3 loops |
 | Closed-loop speed control | 🔄 In Progress | Motor tracking under load (Phase 3 refinement) |
 | Current sensors | ⏳ Upcoming | 3-phase current measurement for true closed-loop |
 
@@ -87,10 +88,11 @@ Each victory demonstrates **systematic root-cause analysis** across abstraction 
 **5. See the Full Implementation Journey**
 - [session_19-04-2026.md](session_19-04-2026.md) — Latest hardware validation results
 - [session_10-08-2026.md](session_10-08-2026.md) — EKF observer implementation & validation
+- [session_11_08_2026.md](session_11_08_2026.md) — Closed-loop stability analysis: Bode/Nyquist/Nichols plots with linearization setup
 - Session files in root — Day-by-day development log
 
 **6. Verify Stability (Before Hardware)**
-- [session_11_08_2026.md](session_11_08_2026.md) — Bode/Nyquist/Nichols plots, phase & gain margins for all 3 loops
+- [session_11_08_2026.md](session_11_08_2026.md) — Bode/Nyquist/Nichols plots, phase & gain margins for all 3 loops, sampling theorem validation
 
 **7. Build & Test**
 - Firmware: `XMC4700/25_04_2026/` (embedded FOC + closed-loop control)
