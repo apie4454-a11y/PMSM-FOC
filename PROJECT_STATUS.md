@@ -1,8 +1,8 @@
 # PMSM Field Oriented Control (FOC) — GM3506 / XMC4700
 
-**Project Status:** ✅ **TLE9879 SHIELD DISCOVERED** — Open-loop FOC on hardware + RTT streaming + Motor model integrated + Generic plotter + TLE9879 embedded FOC discovered  
-**Current Session:** [session_07-05-2026.md](session_07-05-2026.md) (TLE9879 QXA40 discovery: embedded ARM M3 + pre-programmed FOC + SPI configuration)  
-**Last Updated:** 07-05-2026 ✅ **TLE9879 ARCHITECTURE CLARIFIED + EMBEDDED FOC DISCOVERED**
+**Project Status:** ✅ **EKF OBSERVER VALIDATED** — Open-loop FOC on hardware + RTT streaming + Motor model integrated + **EKF state estimation from currents alone (observer-based angle & speed)**  
+**Current Session:** [session_10-08-2026.md](session_10-08-2026.md) (Extended Kalman Filter: motor state estimation from current measurements, validated in SIL, handles load transients robustly)  
+**Last Updated:** 10-08-2026 ✅ **EKF IMPLEMENTATION COMPLETE + VALIDATED**
 
 ---
 
@@ -98,8 +98,10 @@ This project demonstrates **systematic root-cause analysis** at multiple abstrac
 | [session_17-04-2026.md](session_17-04-2026.md) | **Embedded HIL firmware + Encoder:** FOC + motor + inverter in C, 20 kHz ISR, real encoder feedback integration | ✅ Complete |
 | [session_19-04-2026.md](session_19-04-2026.md) | **Motor Control Hardware Validation:** Three critical bugs fixed (inverter timing, flux constant, display format) + dq→RYB coordinate transform tested via UART handshake + step-counter decoupling for deterministic sampling | ✅ Complete |
 | [session_24-04-2026.md](session_24-04-2026.md) | **RTT Streaming Breakthrough:** Autonomous FOC data streaming to J-Scope + removed UART blocking + CSV integration + theta validation + inverter/PWM validation | ✅ Complete |
+| [session_11_08_2026.md](session_11_08_2026.md) | **Stability Analysis:** Linearization + Bode/Nyquist/Nichols plots for all 3 control loops; PM/GM margins verified | ✅ Complete |
 | [session_25-04-2026.md](session_25-04-2026.md) | **Motor Model Integration & Closed-Loop:** Motor model in firmware loop + CSV schema evolution + Generic plotter tools (MATLAB/Python) + Closed-loop FOC profiles + Firmware build resolution | ✅ Complete |
 | [session_07-05-2026.md](session_07-05-2026.md) | **TLE9879 BLDC Shield Discovery:** Critical discovery — TLE9879QXA40 contains embedded ARM M3 + pre-programmed FOC + SPI-configurable (NOT dumb gate driver) | ✅ Complete |
+| [session_10-08-2026.md](session_10-08-2026.md) | **Extended Kalman Filter (EKF) Design & Implementation:** State estimation from current measurements alone (i_α, i_β); α-β frame to avoid θ dependency; validates observability without encoder; robust to load transients; validated in SIL | ✅ Complete |
 | [motor_parameters_derivation.md](motor_parameters_derivation.md) | Motor parameters: physics-based J & B calculation | Reference |
 
 
@@ -161,6 +163,7 @@ Execution rate of embedded control functions is NOT inherited from block diagram
 - PWM modulation comparison & selection ✓
 - Control architecture design ✓
 - Formula-based PI gain calculation ✓
+- Stability margins verified (Bode/Nyquist/Nichols analysis) ✓
 - Phase 1.1: Speed reference tracking with corrected J/B ✓
 - Phase 1.2: Dead time insertion validation ✓
 - **Phase 1.3: MIL → SIL transition (controller extraction)** ✓
@@ -175,6 +178,7 @@ Execution rate of embedded control functions is NOT inherited from block diagram
 - **Phase 6: Closed-loop FOC with speed profiles (speed PI + load torque + time-based profiles)** ✓
 - **Phase 7: Firmware build & link resolution (profile.c integration, DAVE build system)** ✓
 - **Phase 8: TLE9879 shield discovery (embedded FOC architecture + SPI config)** ✓
+- **Phase 9: EKF observer implementation (state estimation from currents alone, α-β frame, SIL validation)** ✓
 
 **🔄 In Progress:**
 - **Phase 9: Hardware architecture planning** (Post-TLE9879 discovery: master/slave architecture)
@@ -199,6 +203,7 @@ Execution rate of embedded control functions is NOT inherited from block diagram
 | **session_24-04-2026.md** | ✅ **RTT streaming:** Autonomous data streaming, removed UART blocking, CSV integration, theta + inverter validation |
 | **session_25-04-2026.md** | ✅ **Motor model + closed-loop:** Open-loop FOC on hardware, motor dynamics in firmware, CSV schema 16-column, generic plotter, speed profiles |
 | **session_07-05-2026.md** | ✅ **TLE9879 discovery:** Embedded ARM M3 FOC controller, SPI configuration, pre-programmed firmware |
+| **session_10-08-2026.md** | ✅ **EKF observer:** Extended Kalman Filter design (α-β frame), 4-state estimation, SIL validation (convergence, load transient robustness, ripple analysis) |
 | **dq_to_abc_stream_uart.m** | ✅ Real-time MATLAB script: validates coordinate transform, UART handshake, plots Vr/Vy/Vb with 120° phase separation |
 | **XMC4700/20_04_2026/** | 🔄 **SPWM integration project (IN PROGRESS):** Clone of 17_04_2026, debugging pwm_modulator_step() with dq→RYB math |
 | **foc_algorithm_sil_16_04_26.m** | ✅ FOC algorithm as MATLAB function (C-ready, used in SIL) |

@@ -1,7 +1,7 @@
 # PMSM Field Oriented Control (FOC) — GM3506 / XMC4700
 
-**Status:** ✅ **TLE9879 Shield Discovered** — Open-loop FOC running + RTT streaming + Motor model integrated + **TLE9879 embedded ARM M3 FOC controller discovered**  
-**Last Updated:** 07-05-2026
+**Status:** ✅ **EKF Observer Validated** — Open-loop FOC running + RTT streaming + Motor model integrated + **EKF state estimation from currents alone (no encoder needed)**  
+**Last Updated:** 10-08-2026
 
 ## What Is This?
 
@@ -14,12 +14,14 @@ A complete **Field Oriented Control (FOC) implementation** for a high-speed gimb
 ✅ **Triple-loop cascaded control system** — Speed → Torque → Current (2 kHz, 20 kHz, 20 kHz respectively)  
 ✅ **Physics-based motor parameters** — Derived J & B from iFligh datasheet; validated against motor datasheet constants  
 ✅ **Formula-driven PI gains** — No empirical tuning; all gains derived from control theory (bandwidth, inertia, resistance)  
+✅ **Stability margins verified** — Phase Margin 77.7° (current loops), 95.2° (speed loop); Bode/Nyquist/Nichols analysis complete  
 ✅ **Coordinate transforms validated on hardware** — dq↔abc math proven correct via UART handshake with real motor  
 ✅ **Real encoder feedback** — XMC4700 CCU4 capture module integrated; rotor angle feedback working at 1 MHz  
 ✅ **PWM dead time** — Hardware SR FlipFlop reconstruction validated (97.2 ns dead time, < 100 ns spec)  
 ✅ **SIL-to-C port** — MATLAB algorithm extracted to embedded C; timing architecture verified  
 ✅ **Autonomous RTT streaming** — Real-time data logging without UART handshake dependency  
 ✅ **Generic CSV plotter tools** — MATLAB & Python plotters for cross-project reuse  
+✅ **Extended Kalman Filter (EKF)** — Motor angle & speed estimation from current measurements alone (no encoder dependency, observability proven)  
 ✅ **TLE9879 embedded FOC discovered** — Power shield contains ARM M3 microcontroller with pre-programmed FOC firmware (SPI configurable)  
 ✅ **Systematic debugging** — 3 major root causes found via methodical analysis (not random guessing)
 
@@ -33,6 +35,7 @@ A complete **Field Oriented Control (FOC) implementation** for a high-speed gimb
 | **Real-Time Control** | C (20 kHz ISR, 1 MHz motor model) | ✅ Embedded |
 | **Motor Algorithm** | FOC (PI current loop, speed regulator) | ✅ Validated |
 | **Simulation** | MATLAB/Simulink (MIL/SIL) | ✅ Reference |
+| **Stability Analysis** | Bode/Nyquist/Nichols (MATLAB Control System Toolbox) | ✅ Verified |
 | **PWM Modulation** | Sine-Triangle (20 kHz, 59V supply) | ✅ Implemented |
 | **Debugging** | SEGGER RTT (real-time telemetry), UART (handshake) | ✅ Proven |
 | **Motor** | iPower GM3506 (24N/22P, 141.4 RPM/V) | ✅ Controlled |
@@ -68,17 +71,28 @@ Each victory demonstrates **systematic root-cause analysis** across abstraction 
 
 ## 🚀 How to Get Started
 
-**1. Review the Motor Design**
+**1. Understand the Design Philosophy**
+- [CONTROL_DESIGN_DECISIONS.md](CONTROL_DESIGN_DECISIONS.md) — Why cascaded FOC? Why EKF? Why these gains?
+- [MATHEMATICAL_FOUNDATION.md](MATHEMATICAL_FOUNDATION.md) — Motor equations, PI gain derivation, EKF system matrices
+
+**2. See How It's Implemented**
+- [IMPLEMENTATION_ARCHITECTURE.md](IMPLEMENTATION_ARCHITECTURE.md) — Simulink blocks → C code mapping, anti-windup, voltage saturation
+
+**3. Review the Motor Design**
 - [motor_parameters_derivation.md](motor_parameters_derivation.md) — Physics-based parameter calculation
 
-**2. Understand the Control Architecture**
+**4. Understand the Control Architecture**
 - [PROJECT_STATUS.md](PROJECT_STATUS.md) — Detailed specs, voltage budget, control strategy (living document)
 
-**3. See the Full Implementation Journey**
+**5. See the Full Implementation Journey**
 - [session_19-04-2026.md](session_19-04-2026.md) — Latest hardware validation results
+- [session_10-08-2026.md](session_10-08-2026.md) — EKF observer implementation & validation
 - Session files in root — Day-by-day development log
 
-**4. Build & Test**
+**6. Verify Stability (Before Hardware)**
+- [session_11_08_2026.md](session_11_08_2026.md) — Bode/Nyquist/Nichols plots, phase & gain margins for all 3 loops
+
+**7. Build & Test**
 - Firmware: `XMC4700/25_04_2026/` (embedded FOC + closed-loop control)
 - Simulation: `simulation_basic_sil.slx` (MATLAB/Simulink SIL model)
 - Python plotter: `plot_csv.py` — Visualize test results
